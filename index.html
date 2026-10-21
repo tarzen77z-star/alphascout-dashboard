@@ -690,14 +690,14 @@
           '<div class="card-top">' +
             '<div><div class="tick">' + esc(s.ticker) + '</div>' +
             (s.company ? '<div class="cname">' + esc(s.company) + '</div>' : '') +
-            '<div class="sector">Added ' + (s.addedDate ? fmtDate(s.addedDate) : "—") + '</div></div>' +
+            '<div class="sector">' + (s.addedDate ? 'Added ' + fmtDateFull(s.addedDate) : 'Added by scan') + '</div></div>' +
             '<div class="price"><div class="p">' + fmt(s.addPrice) + '</div>' +
             '<div class="off" style="color:var(--faint)"><small>price at add</small></div></div>' +
           '</div>' +
           '<span class="badge aligned">ALIGNED — ALL WINDOWS BUY</span>' +
           (s.rsiAtAdd != null ? '<div class="kv" style="grid-template-columns:repeat(2,1fr)">' +
             '<div><div class="k">RSI at add</div><div class="v ' + rsiClass(s.rsiAtAdd) + '">' + Number(s.rsiAtAdd).toFixed(1) + '</div></div>' +
-            '<div><div class="k">Added</div><div class="v" style="font-size:12.5px">' + (s.addedDate ? fmtDate(s.addedDate) : "—") + '</div></div></div>' : '') +
+            '<div><div class="k">Added</div><div class="v" style="font-size:12.5px">' + (s.addedDate ? fmtDateFull(s.addedDate) : "By scan") + '</div></div></div>' : '') +
           (s.note ? '<p class="note"><b>Alignment:</b> ' + esc(s.note) + '</p>' : '') +
         '</article>';
       }
