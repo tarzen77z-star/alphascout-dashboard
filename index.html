@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AlphaScout AI — Paper Trading Dashboard</title>
+<style>
+  :root{--bg:#07090c;--panel:#0e1218;--panel2:#12161f;--line:#1f2735;--text:#e8edf5;--muted:#8b96a8;--green:#2ee6a8;--red:#ff5d73;--amber:#ffc554;--blue:#53b6ff}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:20px 16px 48px}
+  .disclaimer{background:#2a1418;border:1px solid #5b2230;color:#ffb3c0;border-radius:10px;padding:10px 14px;font-weight:600;text-align:center;margin-bottom:16px}
+  header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:4px}
+  h1{font-size:28px;margin:0;letter-spacing:.3px} h1 span{color:var(--green)}
+  .tag{color:var(--muted)} .credit{color:var(--muted);font-size:13px;margin-left:auto}
+  h2{font-size:17px;margin:26px 0 10px;color:var(--text)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .card .k{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.6px}
+  .card .v{font-size:21px;font-weight:700;margin-top:2px}
+  .card .s{color:var(--muted);font-size:12.5px}
+  .pos{color:var(--green)} .neg{color:var(--red)}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:13.5px}
+  th,td{padding:7px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{color:var(--muted);font-weight:600;background:var(--panel2)}
+  td.num,th.num{text-align:right}
+  .tablewrap{overflow-x:auto;border-radius:12px}
+  .badge{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;font-weight:700}
+  .b-in{background:#0d2b21;color:var(--green)} .b-app{background:#12283d;color:var(--blue)} .b-watch{background:#2b2410;color:var(--amber)} .b-below{background:#33141c;color:var(--red)}
+  .note{color:var(--muted);font-size:13px}
+  footer{margin-top:34px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padding-top:12px}
+  .pill{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:1px 9px;margin:2px 3px 2px 0;font-size:12.5px;background:var(--panel)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="disclaimer">PAPER TRADING ONLY — simulated funds, not real money. No real capital is at risk.</div>
+  <header>
+    <h1>AlphaScout <span>AI</span></h1>
+    <div class="tag">Find. Monitor. Act.</div>
+    <div class="credit">Created by SBB and Flint</div>
+  </header>
+  <div class="note" id="updated">Loading latest data…</div>
+
+  <div class="cards" id="accountCards"></div>
+
+  <h2>Python engine</h2>
+  <div class="card" id="engineCard">…</div>
+
+  <h2>Portfolio</h2>
+  <div class="card" id="portfolioCard">…</div>
+
+  <h2>Track A — original 20 (quality pullback)</h2>
+  <div class="tablewrap"><table id="trackA"><thead><tr>
+    <th>Ticker</th><th>Company</th><th class="num">Close</th><th>Zone signal</th><th>Verdict</th>
+    <th class="num">RSI</th><th>Buy zone</th><th>Earnings</th>
+  </tr></thead><tbody></tbody></table></div>
+  <div class="note" id="asofA"></div>
+
+  <h2>Track B — cascade candidates</h2>
+  <div class="tablewrap"><table id="trackB"><thead><tr>
+    <th>Ticker</th><th class="num">Price at add</th><th class="num">RSI</th><th>How it got here</th>
+  </tr></thead><tbody></tbody></table></div>
+
+  <h2>Recent signal changes</h2>
+  <div class="card" id="signalLog">…</div>
+
+  <footer>
+    Data: Yahoo Finance prices via the AlphaScout monitors; account values from the Alpaca <b>paper</b> account API.
+    This page is published from the AlphaScout system on GitHub — figures are paper/simulated and may be delayed.
+    Not investment advice.
+  </footer>
+</div>
+<script>
+const fmt$ = n => n == null ? '—' : '$' + Number(n).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2});
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+fetch('data/dashboard.json?t=' + Date.now()).then(r => r.json()).then(d => {
+  document.getElementById('updated').textContent = 'Last updated: ' + d.generated_at + ' · ' + d.data_note;
+  const a = d.account, chg = a.balance - a.start_anchor, pct = chg / a.start_anchor * 100;
+  const cards = [
+    ['Paper balance', fmt$(a.balance), 'Alpaca paper · ' + esc(a.status)],
+    ['Cash', fmt$(a.cash), 'Positions: ' + a.positions],
+    ['Since system start', (chg>=0?'+':'') + fmt$(chg).replace('$-','−$'), (chg>=0?'+':'') + pct.toFixed(3) + '% since ' + a.start_date + ' clean slate'],
+    ['Shorting', a.shorting_enabled ? 'Enabled' : 'Off', 'Exhaustion shorts armed'],
+    ['Engine mode', d.engine.mode.toUpperCase(), 'Ticks every 5 min, Mon–Fri']
+  ];
+  document.getElementById('accountCards').innerHTML = cards.map(c =>
+    '<div class="card"><div class="k">' + c[0] + '</div><div class="v">' + c[1] + '</div><div class="s">' + c[2] + '</div></div>').join('');
+  const e = d.engine;
+  document.getElementById('engineCard').innerHTML =
+    '<b>' + esc(e.mode) + '</b> — evaluates ' + e.evaluated + ' tracked names every 5 minutes during market hours. ' +
+    'Tonight it detected ' + e.detected_not_queued.length + ' Track B buy signals after hours (queued only in the 9:35 AM–3:55 PM window):<br>' +
+    e.detected_not_queued.map(x => '<span class="pill">' + esc(x.ticker) + ' · ' + esc(x.path.replace(/_/g,' ')) + '</span>').join('') +
+    '<div class="note" style="margin-top:8px">' + esc(e.note) + '</div>';
+  const p = d.portfolio;
+  document.getElementById('portfolioCard').innerHTML = p.positions.length === 0
+    ? 'No open positions yet. ' + p.trades.length + ' system trades so far. First possible trade day: Wed Oct 21, 2026 (max 3 new positions/day, $5,000 per name).'
+    : p.positions.map(x => '<span class="pill">' + esc(x.ticker) + '</span>').join('');
+  const badge = s => s === 'IN ZONE' ? 'b-in' : s === 'APPROACHING' ? 'b-app' : s === 'WATCHING' ? 'b-watch' : 'b-below';
+  document.querySelector('#trackA tbody').innerHTML = d.track_a.map(s =>
+    '<tr><td><b>' + esc(s.ticker) + '</b></td><td>' + esc(s.name) + '</td><td class="num">' + fmt$(s.close) + '</td>' +
+    '<td><span class="badge ' + badge(s.status) + '">' + esc(s.status) + '</span></td>' +
+    '<td>' + esc(s.verdict || '—') + (s.score != null ? ' (' + (s.score>=0?'+':'') + Number(s.score).toFixed(2) + ', ' + s.confidence + '%)' : '') + '</td>' +
+    '<td class="num">' + (s.rsi ?? '—') + '</td><td>' + (s.buy_zone ? fmt$(s.buy_zone[0]) + '–' + fmt$(s.buy_zone[1]) : '—') + '</td>' +
+    '<td>' + esc(s.earnings || '—') + '</td></tr>').join('');
+  document.getElementById('asofA').textContent = d.track_a_asof;
+  document.querySelector('#trackB tbody').innerHTML = d.track_b.map(c =>
+    '<tr><td><b>' + esc(c.ticker) + '</b></td><td class="num">' + fmt$(c.price) + '</td><td class="num">' + (c.rsi ?? '—') + '</td><td style="white-space:normal">' + esc(c.note || '') + '</td></tr>').join('');
+  document.getElementById('signalLog').innerHTML = d.signal_log.slice(-8).reverse().map(x =>
+    '<div>' + esc(x.date) + ' — <b>' + esc(x.ticker) + '</b>: ' + esc(x.from) + ' → ' + esc(x.to) + ' @ ' + fmt$(x.price) + '</div>').join('') || 'No changes logged yet.';
+}).catch(err => { document.getElementById('updated').textContent = 'Could not load data/dashboard.json — ' + err; });
+</script>
+</body>
+</html>

@@ -1,0 +1,731 @@
+{
+ "generated_at": "Tue Oct 20, 2026 08:07 PM ET",
+ "data_note": "Track A prices as of the Tue Oct 20, 2026 close run; account verified via Alpaca paper API on Oct 20.",
+ "disclaimer": "Paper trading only \u2014 simulated funds, not real money.",
+ "account": {
+  "broker": "Alpaca Paper",
+  "account_number": "PA3AG3GJ5GRP",
+  "status": "ACTIVE",
+  "balance": 103716.55,
+  "cash": 103716.55,
+  "start_anchor": 103720.75,
+  "start_date": "2026-10-19",
+  "positions": 0,
+  "shorting_enabled": true
+ },
+ "engine": {
+  "mode": "shadow",
+  "evaluated": 47,
+  "detected_not_queued": [
+   {
+    "ticker": "UNH",
+    "path": "indicator_count"
+   },
+   {
+    "ticker": "AMGN",
+    "path": "now_confirm"
+   },
+   {
+    "ticker": "GILD",
+    "path": "now_confirm"
+   },
+   {
+    "ticker": "PFE",
+    "path": "indicator_count"
+   },
+   {
+    "ticker": "DIS",
+    "path": "indicator_count"
+   },
+   {
+    "ticker": "LLY",
+    "path": "indicator_count"
+   },
+   {
+    "ticker": "ROST",
+    "path": "indicator_count"
+   },
+   {
+    "ticker": "GRMN",
+    "path": "indicator_count"
+   },
+   {
+    "ticker": "CTAS",
+    "path": "now_confirm"
+   },
+   {
+    "ticker": "CVX",
+    "path": "indicator_count"
+   },
+   {
+    "ticker": "NUE",
+    "path": "now_confirm"
+   },
+   {
+    "ticker": "AJG",
+    "path": "now_confirm"
+   },
+   {
+    "ticker": "WELL",
+    "path": "indicator_count"
+   },
+   {
+    "ticker": "MDLZ",
+    "path": "indicator_count"
+   },
+   {
+    "ticker": "BLK",
+    "path": "indicator_count"
+   },
+   {
+    "ticker": "KMB",
+    "path": "now_confirm"
+   },
+   {
+    "ticker": "EOG",
+    "path": "indicator_count"
+   },
+   {
+    "ticker": "AFL",
+    "path": "indicator_count"
+   }
+  ],
+  "queued": 0,
+  "note": "Shadow mode Wed Oct 21 \u2014 queues intents, places nothing; the 10:23 AM agent run trades. Flips to live 5-minute API execution Thu Oct 22 unless held."
+ },
+ "portfolio": {
+  "positions": [],
+  "trades": [],
+  "pending": []
+ },
+ "track_a": [
+  {
+   "ticker": "NVDA",
+   "name": "NVIDIA",
+   "close": 216.47,
+   "status": "APPROACHING",
+   "verdict": "HOLD",
+   "score": -0.09,
+   "confidence": 57,
+   "rsi": 40.9,
+   "buy_zone": [
+    203,
+    214
+   ],
+   "earnings": "Nov 18, 2026 (est)"
+  },
+  {
+   "ticker": "AVGO",
+   "name": "Broadcom",
+   "close": 334.37,
+   "status": "APPROACHING",
+   "verdict": "HOLD",
+   "score": -0.09,
+   "confidence": 55,
+   "rsi": 38.6,
+   "buy_zone": [
+    300,
+    329
+   ],
+   "earnings": "Early Dec 2026 (unverified)"
+  },
+  {
+   "ticker": "GOOGL",
+   "name": "Alphabet",
+   "close": 340.28,
+   "status": "IN ZONE",
+   "verdict": "HOLD",
+   "score": 0.06,
+   "confidence": 52,
+   "rsi": 44.7,
+   "buy_zone": [
+    322,
+    341
+   ],
+   "earnings": "Oct 28, 2026"
+  },
+  {
+   "ticker": "AMZN",
+   "name": "Amazon",
+   "close": 262.63,
+   "status": "WATCHING",
+   "verdict": "HOLD",
+   "score": 0.2,
+   "confidence": 66,
+   "rsi": 57.4,
+   "buy_zone": [
+    238,
+    250
+   ],
+   "earnings": "Oct 29, 2026"
+  },
+  {
+   "ticker": "QCOM",
+   "name": "Qualcomm",
+   "close": 175.71,
+   "status": "APPROACHING",
+   "verdict": "HOLD",
+   "score": -0.12,
+   "confidence": 62,
+   "rsi": 47.1,
+   "buy_zone": [
+    160,
+    172
+   ],
+   "earnings": "Nov 4, 2026"
+  },
+  {
+   "ticker": "AMAT",
+   "name": "Applied Materials",
+   "close": 404.98,
+   "status": "IN ZONE",
+   "verdict": "HOLD",
+   "score": -0.14,
+   "confidence": 46,
+   "rsi": 29.3,
+   "buy_zone": [
+    375,
+    409
+   ],
+   "earnings": "Nov 12, 2026"
+  },
+  {
+   "ticker": "LRCX",
+   "name": "Lam Research",
+   "close": 263.45,
+   "status": "IN ZONE",
+   "verdict": "HOLD",
+   "score": 0.18,
+   "confidence": 45,
+   "rsi": 32.5,
+   "buy_zone": [
+    240,
+    264
+   ],
+   "earnings": "Oct 21, 2026"
+  },
+  {
+   "ticker": "TMUS",
+   "name": "T-Mobile US",
+   "close": 157.75,
+   "status": "IN ZONE",
+   "verdict": "HOLD",
+   "score": -0.09,
+   "confidence": 50,
+   "rsi": 42.7,
+   "buy_zone": [
+    148,
+    160
+   ],
+   "earnings": "Oct 28, 2026"
+  },
+  {
+   "ticker": "SCHW",
+   "name": "Charles Schwab",
+   "close": 90.89,
+   "status": "IN ZONE",
+   "verdict": "HOLD",
+   "score": 0.16,
+   "confidence": 48,
+   "rsi": 29.6,
+   "buy_zone": [
+    86,
+    92
+   ],
+   "earnings": "Reported Oct 15 (next ~mid-Jan 2027)"
+  },
+  {
+   "ticker": "SPGI",
+   "name": "S&P Global",
+   "close": 438.12,
+   "status": "APPROACHING",
+   "verdict": "HOLD",
+   "score": -0.04,
+   "confidence": 53,
+   "rsi": 68.8,
+   "buy_zone": [
+    395,
+    425
+   ],
+   "earnings": "Late Oct 2026 (unverified)"
+  },
+  {
+   "ticker": "MCO",
+   "name": "Moody's",
+   "close": 475.35,
+   "status": "APPROACHING",
+   "verdict": "HOLD",
+   "score": 0.02,
+   "confidence": 48,
+   "rsi": 53.8,
+   "buy_zone": [
+    440,
+    467
+   ],
+   "earnings": "Oct 21, 2026"
+  },
+  {
+   "ticker": "JNJ",
+   "name": "Johnson & Johnson",
+   "close": 259.36,
+   "status": "APPROACHING",
+   "verdict": "HOLD",
+   "score": 0.08,
+   "confidence": 50,
+   "rsi": 48.9,
+   "buy_zone": [
+    248,
+    256
+   ],
+   "earnings": "Reported Oct 13 (next ~mid-Jan 2027)"
+  },
+  {
+   "ticker": "PEP",
+   "name": "PepsiCo",
+   "close": 134.02,
+   "status": "APPROACHING",
+   "verdict": "HOLD",
+   "score": -0.03,
+   "confidence": 57,
+   "rsi": 59.8,
+   "buy_zone": [
+    124,
+    132
+   ],
+   "earnings": "Reported Oct 8 (next ~early Feb 2027)"
+  },
+  {
+   "ticker": "HSY",
+   "name": "Hershey",
+   "close": 169.58,
+   "status": "IN ZONE",
+   "verdict": "HOLD",
+   "score": -0.1,
+   "confidence": 48,
+   "rsi": 55.4,
+   "buy_zone": [
+    158,
+    170
+   ],
+   "earnings": "~Oct 29, 2026 (unverified)"
+  },
+  {
+   "ticker": "UPS",
+   "name": "United Parcel Service",
+   "close": 98.52,
+   "status": "APPROACHING",
+   "verdict": "HOLD",
+   "score": -0.12,
+   "confidence": 57,
+   "rsi": 57,
+   "buy_zone": [
+    90,
+    98
+   ],
+   "earnings": "~Oct 27, 2026 (unverified)"
+  },
+  {
+   "ticker": "SLB",
+   "name": "SLB (Schlumberger)",
+   "close": 49.98,
+   "status": "IN ZONE",
+   "verdict": "HOLD",
+   "score": -0.08,
+   "confidence": 48,
+   "rsi": 47.9,
+   "buy_zone": [
+    46,
+    50
+   ],
+   "earnings": "Oct 23, 2026"
+  },
+  {
+   "ticker": "NEE",
+   "name": "NextEra Energy",
+   "close": 78.86,
+   "status": "IN ZONE",
+   "verdict": "HOLD",
+   "score": 0.01,
+   "confidence": 47,
+   "rsi": 49.9,
+   "buy_zone": [
+    75,
+    80
+   ],
+   "earnings": "Oct 21, 2026"
+  },
+  {
+   "ticker": "O",
+   "name": "Realty Income",
+   "close": 56.34,
+   "status": "APPROACHING",
+   "verdict": "HOLD",
+   "score": -0.11,
+   "confidence": 52,
+   "rsi": 51.7,
+   "buy_zone": [
+    53,
+    56
+   ],
+   "earnings": "Late Oct 2026 (unverified)"
+  },
+  {
+   "ticker": "PLD",
+   "name": "Prologis",
+   "close": 127.47,
+   "status": "APPROACHING",
+   "verdict": "HOLD",
+   "score": -0.16,
+   "confidence": 64,
+   "rsi": 41.5,
+   "buy_zone": [
+    118,
+    126
+   ],
+   "earnings": "Reported Oct 15 (next ~Feb 2027)"
+  },
+  {
+   "ticker": "NEM",
+   "name": "Newmont",
+   "close": 116.81,
+   "status": "IN ZONE",
+   "verdict": "HOLD",
+   "score": 0.11,
+   "confidence": 60,
+   "rsi": 47.9,
+   "buy_zone": [
+    110,
+    119
+   ],
+   "earnings": "Oct 22, 2026"
+  }
+ ],
+ "track_a_asof": "Tue Oct 20, 2026 close (buy-zone-monitor artifact close refresh 20:30Z; verdictBasis=CLOSE; priceAt 2026-10-20T20:26-20:27Z; zone signals per task definition: APPROACHING = above zone high within 5%)",
+ "track_b": [
+  {
+   "ticker": "UNH",
+   "price": 401.43,
+   "rsi": 63.3,
+   "note": "Cleanest alignment. 6M +23.7%, bullish MACD cross, 1W +5.8%."
+  },
+  {
+   "ticker": "AMGN",
+   "price": 432.49,
+   "rsi": 60,
+   "note": "6M +21.7%, 1M +12.2%, 1W +4.3%."
+  },
+  {
+   "ticker": "GILD",
+   "price": 156.19,
+   "rsi": 61,
+   "note": "6M +13.5%, steady trend, 1W +3.3%."
+  },
+  {
+   "ticker": "OXY",
+   "price": 62.38,
+   "rsi": 62,
+   "note": "6M +16.0%, 1W +3.8%."
+  },
+  {
+   "ticker": "PFE",
+   "price": 29.58,
+   "rsi": 67,
+   "note": "6M +7.3%, 1M +6.9%, 1W +4.6%."
+  },
+  {
+   "ticker": "AAPL",
+   "price": 343.46,
+   "rsi": 62.1,
+   "note": "6M +27.1%, MACD bullish cross 3 sessions before Oct 16, 1W +2.0%."
+  },
+  {
+   "ticker": "DIS",
+   "price": 110.59,
+   "rsi": 65.4,
+   "note": "6M +4.1%, 1M +5.0%, MACD cross 7 sessions before Oct 16, 1W +2.4%."
+  },
+  {
+   "ticker": "LLY",
+   "price": 1257.03,
+   "rsi": 68.6,
+   "note": "Strongest trend: 6M +35.6%, 1M +9.0%. Above upper Bollinger \u2014 extended."
+  },
+  {
+   "ticker": "PM",
+   "price": 205.2,
+   "rsi": 67.5,
+   "note": "6M +30.1%, 1M +8.8%, 1W +2.0%. RSI range 65\u201370 across sources."
+  },
+  {
+   "ticker": "ROST",
+   "price": 236.89,
+   "rsi": 60.0,
+   "note": "All windows green, fresh MACD cross; thin margins over averages."
+  },
+  {
+   "ticker": "GRMN",
+   "price": 284.79,
+   "rsi": 54.4,
+   "note": "Least stretched RSI; sits just under its 50-day \u2014 least confirmed."
+  },
+  {
+   "ticker": "LIN",
+   "price": 498.43,
+   "rsi": 67.8,
+   "note": "1M +8.7%, 1W +3.0%; 6M leg thinnest pass, price near 200-day."
+  },
+  {
+   "ticker": "CTAS",
+   "price": 213.69,
+   "rsi": 71.6,
+   "note": "FLAG warm RSI. 6M +19.3%, 1M +8.0%, 5 of 5 sessions up."
+  },
+  {
+   "ticker": "CVX",
+   "price": 224.99,
+   "rsi": 71,
+   "note": "FLAG warm RSI. 6M +22.3%, 1M +7.4%, MACD bullish cross, 1W +6.1%."
+  },
+  {
+   "ticker": "TMO",
+   "price": 690.43,
+   "rsi": null,
+   "note": "Strongest of the Oct 19 scan \u2014 clean 6M/1M/1W alignment, cap ~$255B verified. Earnings Wed Oct 21, 2026 \u2014 earnings guard applies."
+  },
+  {
+   "ticker": "NUE",
+   "price": 264.48,
+   "rsi": null,
+   "note": "Oct 19 scan: 6M/1M/1W aligned Buy/Strong Buy."
+  },
+  {
+   "ticker": "DHR",
+   "price": 229.76,
+   "rsi": null,
+   "note": "Oct 19 scan: 6M/1M/1W aligned Buy/Strong Buy."
+  },
+  {
+   "ticker": "AJG",
+   "price": 252.44,
+   "rsi": null,
+   "note": "Oct 19 scan: aligned; best 1W of the batch (+7.9%)."
+  },
+  {
+   "ticker": "DVN",
+   "price": 50.65,
+   "rsi": null,
+   "note": "Oct 19 scan: 6M/1M/1W aligned Buy/Strong Buy."
+  },
+  {
+   "ticker": "WELL",
+   "price": 234.99,
+   "rsi": null,
+   "note": "Oct 19 scan: aligned; thin margin vs its 50-day average."
+  },
+  {
+   "ticker": "MDLZ",
+   "price": 63.85,
+   "rsi": null,
+   "note": "Oct 19 scan: 6M/1M/1W aligned Buy/Strong Buy."
+  },
+  {
+   "ticker": "FANG",
+   "price": 204.37,
+   "rsi": null,
+   "note": "Oct 19 scan: 6M/1M/1W aligned Buy/Strong Buy."
+  },
+  {
+   "ticker": "BLK",
+   "price": 1134.41,
+   "rsi": null,
+   "note": "Oct 19 scan: 6M/1M/1W aligned Buy/Strong Buy."
+  },
+  {
+   "ticker": "KMB",
+   "price": 104.6,
+   "rsi": null,
+   "note": "Oct 19 scan: aligned; thin margin vs its 200-day average."
+  },
+  {
+   "ticker": "EOG",
+   "price": 157.65,
+   "rsi": 69,
+   "note": "Oct 19 scan: aligned; RSI 69 \u2014 warm."
+  },
+  {
+   "ticker": "AFL",
+   "price": 119.57,
+   "rsi": null,
+   "note": "Oct 19 scan: aligned; thinnest 6M leg of the batch."
+  },
+  {
+   "ticker": "CRM",
+   "price": 242.45,
+   "rsi": 57,
+   "note": "Oct 20 scan: 6M +30.2% (+21.9% vs 200-day), 1M +1.9% just flipped positive, 1W +3.6%, RSI 57, cap ~$199.5B verified. Earnings ~Dec 2."
+  }
+ ],
+ "signal_log": [
+  {
+   "date": "2026-10-19",
+   "from": "IN ZONE",
+   "price": 217.54,
+   "ticker": "NVDA",
+   "to": "APPROACHING"
+  },
+  {
+   "date": "2026-10-19",
+   "from": "IN ZONE",
+   "price": 336.71,
+   "ticker": "AVGO",
+   "to": "APPROACHING"
+  },
+  {
+   "date": "2026-10-19",
+   "from": "IN ZONE",
+   "price": 345.02,
+   "ticker": "GOOGL",
+   "to": "APPROACHING"
+  },
+  {
+   "date": "2026-10-19",
+   "from": "IN ZONE",
+   "price": 259.23,
+   "ticker": "AMZN",
+   "to": "APPROACHING"
+  },
+  {
+   "date": "2026-10-19",
+   "from": "IN ZONE",
+   "price": 175.89,
+   "ticker": "QCOM",
+   "to": "APPROACHING"
+  },
+  {
+   "date": "2026-10-19",
+   "from": "IN ZONE",
+   "price": 423.55,
+   "ticker": "AMAT",
+   "to": "APPROACHING"
+  },
+  {
+   "date": "2026-10-19",
+   "from": "IN ZONE",
+   "price": 276.73,
+   "ticker": "LRCX",
+   "to": "APPROACHING"
+  },
+  {
+   "date": "2026-10-19",
+   "from": "WATCHING",
+   "price": 480.77,
+   "ticker": "MCO",
+   "to": "APPROACHING"
+  },
+  {
+   "date": "2026-10-19",
+   "from": "IN ZONE",
+   "price": 132.17,
+   "ticker": "PEP",
+   "to": "APPROACHING"
+  },
+  {
+   "date": "2026-10-19",
+   "from": "APPROACHING",
+   "price": 168.43,
+   "ticker": "HSY",
+   "to": "IN ZONE"
+  },
+  {
+   "date": "2026-10-19",
+   "from": "BUY",
+   "price": 262.45,
+   "ticker": "AMZN",
+   "to": "HOLD"
+  },
+  {
+   "date": "2026-10-20",
+   "ticker": "AMZN",
+   "from": "APPROACHING",
+   "to": "WATCHING",
+   "price": 263.57
+  },
+  {
+   "date": "2026-10-20",
+   "ticker": "AMZN",
+   "from": "HOLD",
+   "to": "BUY",
+   "price": 263.57
+  },
+  {
+   "date": "2026-10-20",
+   "ticker": "AMAT",
+   "from": "APPROACHING",
+   "to": "IN ZONE",
+   "price": 407.72
+  },
+  {
+   "date": "2026-10-20",
+   "ticker": "TMUS",
+   "from": "IN ZONE",
+   "to": "APPROACHING",
+   "price": 160.58
+  },
+  {
+   "date": "2026-10-20",
+   "ticker": "JNJ",
+   "from": "IN ZONE",
+   "to": "APPROACHING",
+   "price": 260.08
+  },
+  {
+   "date": "2026-10-20",
+   "ticker": "UPS",
+   "from": "IN ZONE",
+   "to": "APPROACHING",
+   "price": 98.88
+  },
+  {
+   "date": "2026-10-20",
+   "ticker": "O",
+   "from": "IN ZONE",
+   "to": "APPROACHING",
+   "price": 56.28
+  },
+  {
+   "date": "2026-10-20",
+   "ticker": "GOOGL",
+   "from": "APPROACHING",
+   "to": "IN ZONE",
+   "price": 340.28
+  },
+  {
+   "date": "2026-10-20",
+   "ticker": "LRCX",
+   "from": "APPROACHING",
+   "to": "IN ZONE",
+   "price": 263.45
+  },
+  {
+   "date": "2026-10-20",
+   "ticker": "TMUS",
+   "from": "APPROACHING",
+   "to": "IN ZONE",
+   "price": 157.75
+  },
+  {
+   "date": "2026-10-20",
+   "ticker": "PLD",
+   "from": "IN ZONE",
+   "to": "APPROACHING",
+   "price": 127.47
+  },
+  {
+   "date": "2026-10-20",
+   "ticker": "AMZN",
+   "from": "BUY",
+   "to": "HOLD",
+   "price": 262.63
+  }
+ ]
+}
