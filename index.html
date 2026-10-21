@@ -931,14 +931,23 @@
 
       /* ---------- main ---------- */
       fetch("data/dashboard.json?t=" + Date.now()).then(function(r){ return r.json(); }).then(function(d){
+        /* Render state lives outside renderAll so the 45s poller can
+           re-render in place without losing the active filters/search. */
+        var meta, pf, ps, tx, ts, txRows, h, hs;
+        var listMode = "both", alignedOnly = false, boardQ = "", boardSector = "", boardSignal = "ALL";
+        var txType = "ALL", txQuery = "", txSortMode = "new";
+        var hMode = "Daily";
+        var wired = false;
+
+        function renderAll(d){
         DATA = d;
-        var meta = d.meta || {};
+        meta = d.meta || {};
         document.getElementById("stampAsOf").textContent = meta.asOfLabel || "—";
         document.getElementById("stampUpdated").textContent =
           meta.lastRefreshedAt ? "Board refreshed " + fmtET(meta.lastRefreshedAt) : "";
 
-        /* tabs */
-        document.querySelectorAll(".tbtn").forEach(function(btn){
+        /* tabs (persistent elements: wire once) */
+        if (!wired) document.querySelectorAll(".tbtn").forEach(function(btn){
           btn.addEventListener("click", function(){
             document.getElementById("view-detail").classList.add("hidden");
             document.getElementById("tabBar").classList.remove("hidden");
@@ -977,6 +986,10 @@
               return '<span><b>' + esc(e.ticker) + '</b> ' + esc(when) +
                 (e.certain === false ? ' <span class="uv">· date unverified</span>' : '') + '</span>';
             }).join("") + '</div>';
+        } else {
+          var strip2 = document.getElementById("earnStrip");
+          strip2.classList.add("hidden");
+          strip2.innerHTML = "";
         }
 
         /* grids */
@@ -989,13 +1002,14 @@
             '<p class="sec-sub">New alignments the daily scan picked up. They carry the at-add price, ' +
             'RSI and the scan note; their full timeframe readings join the board on the next publish.</p>' +
             '<div class="grid">' + d.scanAdds.map(scanCard).join("") + '</div>';
+        } else {
+          document.getElementById("scanAddsWrap").innerHTML = "";
         }
 
         /* board controls: list toggle + aligned pill + signal pills + search + sector */
-        var listMode = "both", alignedOnly = false, boardQ = "", boardSector = "", boardSignal = "ALL";
-        var ltHtml = [["both", "Both lists"], ["A", "Buy-zone list"], ["B", "Cascade candidates"]].map(function(m, i){
-          return '<button class="fbtn' + (i === 0 ? " active" : "") + '" data-list="' + m[0] + '">' + m[1] + '</button>';
-        }).join("") + '<button class="fbtn" id="alignedPill">🔥 Aligned Buy · ' + (c.alignedBuy != null ? c.alignedBuy : 0) + '</button>';
+        var ltHtml = [["both", "Both lists"], ["A", "Buy-zone list"], ["B", "Cascade candidates"]].map(function(m){
+          return '<button class="fbtn' + (listMode === m[0] ? " active" : "") + '" data-list="' + m[0] + '">' + m[1] + '</button>';
+        }).join("") + '<button class="fbtn' + (alignedOnly ? " active" : "") + '" id="alignedPill">🔥 Aligned Buy · ' + (c.alignedBuy != null ? c.alignedBuy : 0) + '</button>';
         document.getElementById("listToggle").innerHTML = ltHtml;
 
         var sigCounts = {};
@@ -1004,8 +1018,8 @@
                      ["APPROACHING", "Approaching · " + (sigCounts["APPROACHING"] || 0)],
                      ["WATCHING", "Watching · " + (sigCounts["WATCHING"] || 0)]];
         if (sigCounts["CAUTION"]) fdefs.push(["CAUTION", "Caution · " + sigCounts["CAUTION"]]);
-        document.getElementById("filtersA").innerHTML = fdefs.map(function(f, i){
-          return '<button class="fbtn' + (i === 0 ? " active" : "") + '" data-filter="' + f[0] + '">' + f[1] + '</button>';
+        document.getElementById("filtersA").innerHTML = fdefs.map(function(f){
+          return '<button class="fbtn' + (boardSignal === f[0] ? " active" : "") + '" data-filter="' + f[0] + '">' + f[1] + '</button>';
         }).join("");
 
         function cardMatch(card){
@@ -1052,10 +1066,11 @@
           '<option value="">All sectors</option>' + sectors.map(function(s){
             return '<option value="' + esc(s) + '">' + esc(s) + '</option>';
           }).join("");
-        document.getElementById("boardSearch").addEventListener("input", function(ev){
+        document.getElementById("sectorSel").value = boardSector;
+        if (!wired) document.getElementById("boardSearch").addEventListener("input", function(ev){
           boardQ = ev.target.value.trim().toLowerCase(); applyBoard();
         });
-        document.getElementById("sectorSel").addEventListener("change", function(ev){
+        if (!wired) document.getElementById("sectorSel").addEventListener("change", function(ev){
           boardSector = ev.target.value; applyBoard();
         });
         document.querySelectorAll("#filtersA .fbtn").forEach(function(btn){
@@ -1066,9 +1081,10 @@
             applyBoard();
           });
         });
+        applyBoard();
 
-        /* card click -> detail page */
-        document.querySelectorAll("#gridA, #gridB").forEach(function(grid){
+        /* card click -> detail page (persistent containers: wire once) */
+        if (!wired) document.querySelectorAll("#gridA, #gridB").forEach(function(grid){
           grid.addEventListener("click", function(ev){
             if (ev.target.closest("a")) return;
             var card = ev.target.closest(".card");
@@ -1077,7 +1093,7 @@
         });
 
         /* Portfolio */
-        var pf = d.portfolio || {}, ps = pf.summary || {};
+        pf = d.portfolio || {}; ps = pf.summary || {};
         function tradeStat(x, label){
           if (!x) return '<div class="stat"><div class="n">—</div><div class="l">' + label + '</div></div>';
           var v = x.plPct != null ? fmtPct(x.plPct) : (x.pl != null ? signed(x.pl) : (x.realizedPl != null ? signed(x.realizedPl) : "—"));
@@ -1104,6 +1120,8 @@
           }).join("") + '</div>' +
           (wins[0].note ? '<p class="note" style="margin-top:2px">' + esc(wins[0].note) +
             ' Performance windows (1 day / 7 days / 1 month / 6 months) start once the first position opens, shown next to the S&amp;P 500 (SPY) move for the same window.</p>' : '');
+        } else {
+          document.getElementById("pfPerf").innerHTML = "";
         }
         function posRow(x, closed){
           var entry = x.entryPrice != null ? x.entryPrice : x.price;
@@ -1144,10 +1162,12 @@
             '<th class="num">Shares</th><th class="num">Entry</th><th class="num">Exit</th>' +
             '<th class="num">Value</th><th class="num">Realized P&amp;L</th><th class="num">Held</th></tr></thead><tbody>' +
             pf.closed.map(function(x){ return posRow(x, true); }).join("") + '</tbody></table></div>';
+        } else {
+          document.getElementById("pfClosedWrap").innerHTML = "";
         }
 
         /* Transactions */
-        var tx = d.transactions || {}, ts = tx.summary || {}, txRows = tx.rows || [];
+        tx = d.transactions || {}; ts = tx.summary || {}; txRows = tx.rows || [];
         function txBest(x, label){
           if (!x) return '<div class="stat"><div class="n">—</div><div class="l">' + label + '</div></div>';
           var v = x.realizedPl != null ? signed(x.realizedPl) : (x.pl != null ? signed(x.pl) : (x.plPct != null ? fmtPct(x.plPct) : "—"));
@@ -1163,7 +1183,6 @@
           '<div class="stat"><div class="n">' + fmt(ts.totalSold) + '</div><div class="l">Total sold</div></div>' +
           '<div class="stat"><div class="n">' + fmt(ts.totalShorted) + '</div><div class="l">Total shorted</div></div>' +
           '<div class="stat"><div class="n">' + fmt(ts.totalCovered) + '</div><div class="l">Total covered</div></div>';
-        var txType = "ALL", txQuery = "", txSortMode = "new";
         function renderTx(){
           var body = document.getElementById("txBody");
           if (!txRows.length) {
@@ -1226,8 +1245,8 @@
         var tfdefs = [["ALL", "All · " + (ts.total || 0)], ["BUY", "Buys · " + (ts.buys || 0)],
                       ["SELL", "Sells · " + (ts.sells || 0)], ["SHORT", "Shorts · " + (ts.shorts || 0)],
                       ["COVER", "Covers · " + (ts.covers || 0)], ["WINNERS", "Winners"], ["LOSERS", "Losers"]];
-        document.getElementById("txFilters").innerHTML = tfdefs.map(function(f, i){
-          return '<button class="fbtn' + (i === 0 ? " active" : "") + '" data-tfilter="' + f[0] + '">' + f[1] + '</button>';
+        document.getElementById("txFilters").innerHTML = tfdefs.map(function(f){
+          return '<button class="fbtn' + (txType === f[0] ? " active" : "") + '" data-tfilter="' + f[0] + '">' + f[1] + '</button>';
         }).join("");
         document.querySelectorAll("#txFilters .fbtn").forEach(function(btn){
           btn.addEventListener("click", function(){
@@ -1237,18 +1256,18 @@
             renderTx();
           });
         });
-        document.getElementById("txSearch").addEventListener("input", function(ev){
+        if (!wired) document.getElementById("txSearch").addEventListener("input", function(ev){
           txQuery = ev.target.value.trim().toLowerCase();
           renderTx();
         });
-        document.getElementById("txSort").addEventListener("change", function(ev){
+        if (!wired) document.getElementById("txSort").addEventListener("change", function(ev){
           txSortMode = ev.target.value;
           renderTx();
         });
         renderTx();
 
         /* History */
-        var h = d.history || {}, hs = h.stats || {};
+        h = d.history || {}; hs = h.stats || {};
         function dayCard(x, label){
           if (!x) return '<div class="stat"><div class="n">—</div><div class="l">' + label + '</div></div>';
           return '<div class="stat"><div class="n' + plClsM(x.change) + '">' + signed(x.change) +
@@ -1272,7 +1291,6 @@
           if (r.change == null) return "—";
           return signed(r.change) + (r.changePct != null ? ' <span style="color:var(--faint)">(' + fmtPct(r.changePct) + ')</span>' : '');
         }
-        var hMode = "Daily";
         function renderHist(){
           var body = document.getElementById("histBody");
           var head = '<p style="margin-top:2px">History starts <b>' + (h.startDate ? fmtDateFull(h.startDate) : "—") + '</b> with the clean-slate ' +
@@ -1312,8 +1330,8 @@
           }
         }
         var hdefs = ["Daily", "Weekly", "Monthly"];
-        document.getElementById("histToggle").innerHTML = hdefs.map(function(m, i){
-          return '<button class="fbtn' + (i === 0 ? " active" : "") + '" data-hmode="' + m + '">' + m + '</button>';
+        document.getElementById("histToggle").innerHTML = hdefs.map(function(m){
+          return '<button class="fbtn' + (hMode === m ? " active" : "") + '" data-hmode="' + m + '">' + m + '</button>';
         }).join("");
         document.querySelectorAll("#histToggle .fbtn").forEach(function(btn){
           btn.addEventListener("click", function(){
@@ -1338,6 +1356,38 @@
         document.getElementById("footNote").textContent =
           "Educational monitor, not financial advice. Board prices: " + (meta.asOfLabel || "—") +
           ". Page generated " + fmtET(meta.generatedAt) + " from the system's published data; it refreshes when the system publishes new data.";
+        wired = true;
+        }
+
+        renderAll(d);
+
+        /* ---------- live poller ----------
+           Every 45s re-fetch the data file from this page's own URL with a
+           cache-buster. If generatedAt changed, re-render in place: the
+           active tab, board/tx/history filters and an open detail page all
+           survive (state lives outside renderAll). Pauses while the tab is
+           hidden; a failed fetch is a silent no-op. No full reload. */
+        var lastGen = (d.meta || {}).generatedAt || null;
+        function poll(){
+          if (document.hidden) return;
+          fetch("data/dashboard.json?t=" + Date.now()).then(function(r){ return r.json(); }).then(function(nd){
+            var g = (nd.meta || {}).generatedAt || null;
+            if (!g || g === lastGen) return;
+            lastGen = g;
+            var detailOpen = detailTicker &&
+              !document.getElementById("view-detail").classList.contains("hidden");
+            var y = window.scrollY;
+            renderAll(nd);
+            if (detailOpen && nd.details && nd.details[detailTicker]) {
+              openDetail(detailTicker);
+              window.scrollTo(0, y);
+            }
+          }).catch(function(){ /* silent no-op */ });
+        }
+        setInterval(poll, 45000);
+        document.addEventListener("visibilitychange", function(){
+          if (!document.hidden) poll();
+        });
       }).catch(function(err){
         document.getElementById("stampAsOf").textContent = "Data unavailable";
         document.getElementById("footNote").textContent = "Could not load data/dashboard.json — " + err;
