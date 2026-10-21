@@ -439,7 +439,6 @@
         <div class="estrip hidden" id="earnStrip"></div>
         <div class="filters" role="group" aria-label="Choose which lists to show" id="listToggle"></div>
         <div class="boardctl">
-          <input class="tsearch" id="boardSearch" type="text" placeholder="Search ticker or company…" aria-label="Search the board by ticker or company" />
           <select class="ssel" id="sectorSel" aria-label="Filter the board by sector"></select>
         </div>
 
@@ -1067,9 +1066,6 @@
             return '<option value="' + esc(s) + '">' + esc(s) + '</option>';
           }).join("");
         document.getElementById("sectorSel").value = boardSector;
-        if (!wired) document.getElementById("boardSearch").addEventListener("input", function(ev){
-          boardQ = ev.target.value.trim().toLowerCase(); applyBoard();
-        });
         if (!wired) document.getElementById("sectorSel").addEventListener("change", function(ev){
           boardSector = ev.target.value; applyBoard();
         });
