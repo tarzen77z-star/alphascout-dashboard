@@ -116,6 +116,20 @@
       .stat .n.g{color:var(--green)} .stat .n.c{color:var(--cyan)} .stat .n.v{color:var(--violet)} .stat .n.a{color:var(--amber)}
       .stat .n.r{color:var(--red)}
 
+      /* ---------- VIEW TABS ---------- */
+      .tabs{display:flex;flex-wrap:wrap;gap:10px;margin:24px 0 2px}
+      .tbtn{
+        font-family:var(--sans);font-size:15px;font-weight:650;cursor:pointer;
+        border:1px solid var(--line-soft);background:var(--panel);color:var(--muted);
+        padding:10px 26px;border-radius:999px;transition:all .15s ease;
+        backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+      }
+      .tbtn:hover{border-color:var(--line);color:var(--text)}
+      .tbtn.active{
+        color:var(--green);border-color:rgba(34,229,132,.55);
+        box-shadow:0 0 18px rgba(34,229,132,.28), inset 0 0 12px rgba(34,229,132,.08);
+      }
+
       /* ---------- SECTIONS ---------- */
       section{margin-top:44px}
       .sec-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 16px;margin-bottom:6px}
@@ -313,10 +327,18 @@
           new data.
         </p>
 
+      </header>
+
+      <nav class="tabs" role="tablist" aria-label="Dashboard views">
+        <button class="tbtn active" type="button" data-view="monitor" role="tab">Monitor</button>
+        <button class="tbtn" type="button" data-view="portfolio" role="tab">Portfolio</button>
+        <button class="tbtn" type="button" data-view="history" role="tab">History</button>
+      </nav>
+
+      <div class="view" id="view-monitor">
         <div class="tape" aria-hidden="true"><div class="tape-track" id="tape"></div></div>
         <div class="stats" id="heroStats"></div>
         <div class="estrip hidden" id="earnStrip"></div>
-      </header>
 
       <section>
         <div class="sec-head">
@@ -349,30 +371,35 @@
         <div class="grid" id="gridB"></div>
       </section>
 
-      <section>
-        <div class="sec-head">
-          <span class="sec-kicker">Portfolio</span>
-          <h2>Portfolio Summary</h2>
-        </div>
-        <div class="stats" id="pfStats"></div>
-        <div class="scope" id="pfBody"></div>
-      </section>
+        <section>
+          <div class="sec-head">
+            <span class="sec-kicker">Signal Log</span>
+            <h2>Signal Changes</h2>
+          </div>
+          <div class="logbox" id="logBox"></div>
+        </section>
+      </div>
 
-      <section>
-        <div class="sec-head">
-          <span class="sec-kicker">History</span>
-          <h2>Balance History</h2>
-        </div>
-        <div class="scope" id="histBody"></div>
-      </section>
+      <div class="view hidden" id="view-portfolio">
+        <section>
+          <div class="sec-head">
+            <span class="sec-kicker">Portfolio</span>
+            <h2>Portfolio Summary</h2>
+          </div>
+          <div class="stats" id="pfStats"></div>
+          <div class="scope" id="pfBody"></div>
+        </section>
+      </div>
 
-      <section>
-        <div class="sec-head">
-          <span class="sec-kicker">Signal Log</span>
-          <h2>Signal Changes</h2>
-        </div>
-        <div class="logbox" id="logBox"></div>
-      </section>
+      <div class="view hidden" id="view-history">
+        <section>
+          <div class="sec-head">
+            <span class="sec-kicker">History</span>
+            <h2>Balance History</h2>
+          </div>
+          <div class="scope" id="histBody"></div>
+        </section>
+      </div>
 
       <footer>
         <div class="credit">Created by SBB and Flint</div>
@@ -488,6 +515,20 @@
           '<p class="note"><b>Alignment:</b> ' + esc(s.note) + '</p>' +
         '</article>';
       }
+
+      /* view tabs: show one view, hide the others */
+      var tbtns = document.querySelectorAll(".tbtn");
+      tbtns.forEach(function(btn){
+        btn.addEventListener("click", function(){
+          tbtns.forEach(function(b){ b.classList.remove("active"); });
+          btn.classList.add("active");
+          var v = btn.getAttribute("data-view");
+          document.querySelectorAll(".view").forEach(function(view){
+            if (view.id === "view-" + v) view.classList.remove("hidden");
+            else view.classList.add("hidden");
+          });
+        });
+      });
 
       fetch("data/dashboard.json?t=" + Date.now()).then(function(r){ return r.json(); }).then(function(d){
         document.getElementById("stampAsOf").textContent = d.board_asof_label;
