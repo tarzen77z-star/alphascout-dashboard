@@ -1299,7 +1299,7 @@
             var rows = (h.daily || []).slice().reverse().map(function(r){
               var tradeTxt = r.tradesCount ? String(r.tradesCount) : "0";
               if (r.trades && r.trades.length) {
-                var names = r.trades.map(function(t){ return t.ticker || t.type || ""; }).filter(Boolean);
+                var names = r.trades.map(function(t){ return typeof t === "string" ? t : (t.ticker || t.type || ""); }).filter(Boolean);
                 if (names.length) tradeTxt += ' · ' + names.join(", ");
               }
               return '<tr><td>' + fmtDateFull(r.date) + '</td>' +
