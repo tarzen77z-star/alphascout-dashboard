@@ -1225,7 +1225,7 @@
                 (x.realizedPlPct != null ? ' <span style="color:var(--faint)">(' + fmtPct(x.realizedPlPct) + ')</span>' : '');
             }
             var plCls2 = isExit && x.realizedPl != null ? (x.realizedPl < 0 ? " neg" : x.realizedPl > 0 ? " pos" : "") : "";
-            out += '<tr><td>' + (x.date ? fmtDate(x.date) : "—") + '</td>' +
+            out += '<tr><td>' + (x.date ? fmtDate(x.date) : "—") + (x.time ? '<br><span style="opacity:.75;font-size:11px">' + x.time + ' ET</span>' : '') + '</td>' +
               '<td><span class="ttype ' + String(x.type || "").toLowerCase() + '">' + esc(x.type) + '</span></td>' +
               '<td><b style="font-family:var(--mono)">' + esc(x.ticker) + '</b>' +
                 (x.track ? ' <span style="color:var(--faint)">· Track ' + esc(x.track) + '</span>' : '') +
