@@ -292,6 +292,9 @@
       .htable td:first-child{font-family:var(--mono);color:var(--text);white-space:nowrap}
       .htable .num{font-family:var(--mono);text-align:right;color:var(--text)}
       .htable th.num{text-align:right}
+      .htable th.sortable{cursor:pointer;white-space:nowrap}
+      .htable th.sortable:hover{color:var(--text)}
+      .htable th.sortable .sdir{font-size:10px;margin-left:3px}
       .htable tr:last-child td{border-bottom:none}
       .htable tr.dayhead td{background:rgba(34,211,238,.05);font-family:var(--mono);color:var(--text);
         font-size:12.5px;letter-spacing:.05em}
@@ -443,6 +446,15 @@
         <div class="filters" role="group" aria-label="Choose which lists to show" id="listToggle"></div>
         <div class="boardctl">
           <select class="ssel" id="sectorSel" aria-label="Filter the board by sector"></select>
+          <select class="ssel" id="boardSort" aria-label="Sort the board cards">
+            <option value="default">Sort: default order</option>
+            <option value="ticker">Ticker A–Z</option>
+            <option value="priceDesc">Price: high to low</option>
+            <option value="priceAsc">Price: low to high</option>
+            <option value="offAsc">% off high: nearest first</option>
+            <option value="rsiDesc">RSI: high to low</option>
+            <option value="rsiAsc">RSI: low to high</option>
+          </select>
         </div>
 
         <section id="secA">
@@ -531,6 +543,9 @@
               <option value="new">Newest first</option>
               <option value="old">Oldest first</option>
               <option value="pl">Biggest P&amp;L</option>
+              <option value="ticker">Ticker A–Z</option>
+              <option value="amount">Largest amount</option>
+              <option value="loss">Biggest loss first</option>
             </select>
           </div>
           <div class="scope txwrap" id="txBody" style="padding:10px 18px"></div>
@@ -658,7 +673,10 @@
         return '' +
         '<article class="card click" data-ticker="' + esc(s.ticker) +
           '" data-name="' + esc(s.company || "") + '" data-sector="' + esc(s.sector || "") +
-          '" data-signal="' + esc(s.signal || "") + '" data-aligned="' + (s.cascadeState === "ALIGNED BUY" ? "1" : "0") + '">' +
+          '" data-signal="' + esc(s.signal || "") + '" data-aligned="' + (s.cascadeState === "ALIGNED BUY" ? "1" : "0") +
+          '" data-price="' + (s.price == null ? "" : s.price) +
+          '" data-off="' + (s.pctOffHigh == null ? "" : s.pctOffHigh) +
+          '" data-rsi="' + (s.rsi == null ? "" : s.rsi) + '">' +
           '<div class="card-top">' +
             '<div><div class="tick">' + esc(s.ticker) + '</div>' +
             '<div class="cname">' + esc(s.company) + '</div>' +
@@ -939,6 +957,10 @@
         var listMode = "both", alignedOnly = false, boardQ = "", boardSector = "", boardSignal = "ALL";
         var txType = "ALL", txQuery = "", txSortMode = "new";
         var hMode = "Daily";
+        /* Sortable-table state (survives the 45s poller re-render). */
+        var boardSort = "default";
+        var pfSortKey = null, pfSortDir = 1, pfClosedSortKey = null, pfClosedSortDir = 1;
+        var hSortKey = null, hSortDir = 1;
         var wired = false;
 
         function renderAll(d){
@@ -1046,6 +1068,40 @@
             card.classList.toggle("hidden", !cardMatch(card));
           });
         }
+        /* Sortable board: reorder card nodes in place (delegated card-click
+           handlers survive a reorder). Original order is remembered per node
+           so "default order" restores the published order. */
+        function sortBoardCards(){
+          ["gridA", "gridB", "scanAddsWrap"].forEach(function(gid){
+            var grid = document.getElementById(gid);
+            if (!grid) return;
+            var cards = Array.prototype.slice.call(grid.children);
+            cards.forEach(function(c, i){
+              if (c.getAttribute("data-orig") == null) c.setAttribute("data-orig", i);
+            });
+            function numAttr(c, a){
+              var v = parseFloat(c.getAttribute(a));
+              return isNaN(v) ? null : v;
+            }
+            cards.sort(function(a, b){
+              if (boardSort === "ticker") {
+                return (a.getAttribute("data-ticker") || "").localeCompare(b.getAttribute("data-ticker") || "");
+              }
+              if (boardSort === "default") {
+                return (+a.getAttribute("data-orig")) - (+b.getAttribute("data-orig"));
+              }
+              var key = boardSort === "priceDesc" || boardSort === "priceAsc" ? "data-price"
+                      : boardSort === "offAsc" ? "data-off" : "data-rsi";
+              var av = numAttr(a, key), bv = numAttr(b, key);
+              if (av == null && bv == null) return 0;
+              if (av == null) return 1;
+              if (bv == null) return -1;
+              if (boardSort === "priceDesc" || boardSort === "rsiDesc" || boardSort === "offAsc") return bv - av;
+              return av - bv;
+            });
+            cards.forEach(function(c){ grid.appendChild(c); });
+          });
+        }
         document.querySelectorAll("#listToggle [data-list]").forEach(function(btn){
           btn.addEventListener("click", function(){
             document.querySelectorAll("#listToggle [data-list]").forEach(function(b){ b.classList.remove("active"); });
@@ -1072,6 +1128,10 @@
         if (!wired) document.getElementById("sectorSel").addEventListener("change", function(ev){
           boardSector = ev.target.value; applyBoard();
         });
+        document.getElementById("boardSort").value = boardSort;
+        if (!wired) document.getElementById("boardSort").addEventListener("change", function(ev){
+          boardSort = ev.target.value; sortBoardCards();
+        });
         document.querySelectorAll("#filtersA .fbtn").forEach(function(btn){
           btn.addEventListener("click", function(){
             document.querySelectorAll("#filtersA .fbtn").forEach(function(b){ b.classList.remove("active"); });
@@ -1081,6 +1141,7 @@
           });
         });
         applyBoard();
+        if (boardSort !== "default") sortBoardCards();
 
         /* card click -> detail page (persistent containers: wire once) */
         if (!wired) document.querySelectorAll("#gridA, #gridB").forEach(function(grid){
@@ -1140,30 +1201,98 @@
             (closed ? '<td class="num">' + (x.daysHeld == null ? "—" : x.daysHeld + 'd') + '</td>'
                     : '<td>' + esc(x.urgency || x.exitUrgency || x.verdict || "—") + '</td>') + '</tr>';
         }
-        if (!pf.open || !pf.open.length) {
-          document.getElementById("pfBody").innerHTML =
-            '<h3>No positions yet</h3>' +
-            '<p>Positions appear here automatically when the system opens one. Buys run at <b>$5,000 per name</b>, ' +
-            'at most <b>3 new positions a day</b> across both tracks, and buys are held when earnings ' +
-            'fall within 3 trading days of the print.</p>';
-        } else {
-          document.getElementById("pfBody").innerHTML =
-            '<table class="htable"><thead><tr><th>Ticker</th><th>Track</th><th class="num">Shares</th>' +
-            '<th class="num">Entry</th><th class="num">Current</th><th class="num">Value</th>' +
-            '<th class="num">P&amp;L</th><th>Exit urgency</th></tr></thead><tbody>' +
-            pf.open.map(function(x){ return posRow(x, false); }).join("") + '</tbody></table>';
+        /* Sortable position tables: tap a header to sort, tap again to reverse.
+           Missing values always sort last. */
+        function pfVal(x, key, closed){
+          if (key === "ticker") return x.ticker || "";
+          if (key === "track") return x.track || "";
+          if (key === "shares") return x.shares;
+          if (key === "entry") return x.entryPrice != null ? x.entryPrice : x.price;
+          if (key === "current") return x.currentPrice != null ? x.currentPrice : x.current;
+          if (key === "exit") return x.exitPrice != null ? x.exitPrice : x.closePrice;
+          if (key === "value") return x.currentValue != null ? x.currentValue : x.value;
+          if (key === "pl") return closed
+            ? (x.realizedPnl != null ? x.realizedPnl : (x.realizedPl != null ? x.realizedPl : x.pl))
+            : (x.unrealizedPnl != null ? x.unrealizedPnl : x.pl);
+          if (key === "urgency") return x.urgency || x.exitUrgency || x.verdict || "";
+          if (key === "held") return x.daysHeld;
+          return null;
         }
-        if (pf.closed && pf.closed.length) {
-          document.getElementById("pfClosedWrap").innerHTML =
-            '<div class="sec-head" style="margin-top:32px"><span class="sec-kicker">Closed</span>' +
-            '<h2 style="font-size:22px">Closed Positions</h2></div>' +
-            '<div class="scope txwrap"><table class="htable"><thead><tr><th>Ticker</th><th>Track</th>' +
-            '<th class="num">Shares</th><th class="num">Entry</th><th class="num">Exit</th>' +
-            '<th class="num">Value</th><th class="num">Realized P&amp;L</th><th class="num">Held</th></tr></thead><tbody>' +
-            pf.closed.map(function(x){ return posRow(x, true); }).join("") + '</tbody></table></div>';
-        } else {
-          document.getElementById("pfClosedWrap").innerHTML = "";
+        function pfCmp(a, b, key, closed, dir){
+          var av = pfVal(a, key, closed), bv = pfVal(b, key, closed);
+          if (av == null && bv == null) return 0;
+          if (av == null) return 1;
+          if (bv == null) return -1;
+          var c = (typeof av === "string" || typeof bv === "string")
+            ? String(av).localeCompare(String(bv)) : av - bv;
+          return dir * c;
         }
+        function pfTh(key, label, num, activeKey, activeDir, attr){
+          var on = activeKey === key;
+          return '<th class="sortable' + (num ? ' num' : '') + '" ' + attr + '="' + key + '"' +
+            (on ? ' aria-sort="' + (activeDir === 1 ? 'ascending' : 'descending') + '"' : '') +
+            ' title="Sort by ' + label + '">' + label +
+            '<span class="sdir">' + (on ? (activeDir === 1 ? ' ▲' : ' ▼') : '') + '</span></th>';
+        }
+        function renderPf(){
+          if (!pf.open || !pf.open.length) {
+            document.getElementById("pfBody").innerHTML =
+              '<h3>No positions yet</h3>' +
+              '<p>Positions appear here automatically when the system opens one. Buys run at <b>$5,000 per name</b>, ' +
+              'at most <b>3 new positions a day</b> across both tracks, and buys are held when earnings ' +
+              'fall within 3 trading days of the print.</p>';
+          } else {
+            var openSorted = pf.open.slice();
+            if (pfSortKey) openSorted.sort(function(a, b){ return pfCmp(a, b, pfSortKey, false, pfSortDir); });
+            document.getElementById("pfBody").innerHTML =
+              '<table class="htable"><thead><tr>' +
+              pfTh("ticker", "Ticker", false, pfSortKey, pfSortDir, "data-pfkey") +
+              pfTh("track", "Track", false, pfSortKey, pfSortDir, "data-pfkey") +
+              pfTh("shares", "Shares", true, pfSortKey, pfSortDir, "data-pfkey") +
+              pfTh("entry", "Entry", true, pfSortKey, pfSortDir, "data-pfkey") +
+              pfTh("current", "Current", true, pfSortKey, pfSortDir, "data-pfkey") +
+              pfTh("value", "Value", true, pfSortKey, pfSortDir, "data-pfkey") +
+              pfTh("pl", "P&amp;L", true, pfSortKey, pfSortDir, "data-pfkey") +
+              pfTh("urgency", "Exit urgency", false, pfSortKey, pfSortDir, "data-pfkey") +
+              '</tr></thead><tbody>' +
+              openSorted.map(function(x){ return posRow(x, false); }).join("") + '</tbody></table>';
+            document.querySelectorAll("#pfBody th[data-pfkey]").forEach(function(th){
+              th.addEventListener("click", function(){
+                var k = th.getAttribute("data-pfkey");
+                if (pfSortKey === k) { pfSortDir = -pfSortDir; } else { pfSortKey = k; pfSortDir = 1; }
+                renderPf();
+              });
+            });
+          }
+          if (pf.closed && pf.closed.length) {
+            var closedSorted = pf.closed.slice();
+            if (pfClosedSortKey) closedSorted.sort(function(a, b){ return pfCmp(a, b, pfClosedSortKey, true, pfClosedSortDir); });
+            document.getElementById("pfClosedWrap").innerHTML =
+              '<div class="sec-head" style="margin-top:32px"><span class="sec-kicker">Closed</span>' +
+              '<h2 style="font-size:22px">Closed Positions</h2></div>' +
+              '<div class="scope txwrap"><table class="htable"><thead><tr>' +
+              pfTh("ticker", "Ticker", false, pfClosedSortKey, pfClosedSortDir, "data-pfckey") +
+              pfTh("track", "Track", false, pfClosedSortKey, pfClosedSortDir, "data-pfckey") +
+              pfTh("shares", "Shares", true, pfClosedSortKey, pfClosedSortDir, "data-pfckey") +
+              pfTh("entry", "Entry", true, pfClosedSortKey, pfClosedSortDir, "data-pfckey") +
+              pfTh("exit", "Exit", true, pfClosedSortKey, pfClosedSortDir, "data-pfckey") +
+              pfTh("value", "Value", true, pfClosedSortKey, pfClosedSortDir, "data-pfckey") +
+              pfTh("pl", "Realized P&amp;L", true, pfClosedSortKey, pfClosedSortDir, "data-pfckey") +
+              pfTh("held", "Held", true, pfClosedSortKey, pfClosedSortDir, "data-pfckey") +
+              '</tr></thead><tbody>' +
+              closedSorted.map(function(x){ return posRow(x, true); }).join("") + '</tbody></table></div>';
+            document.querySelectorAll("#pfClosedWrap th[data-pfckey]").forEach(function(th){
+              th.addEventListener("click", function(){
+                var k = th.getAttribute("data-pfckey");
+                if (pfClosedSortKey === k) { pfClosedSortDir = -pfClosedSortDir; } else { pfClosedSortKey = k; pfClosedSortDir = 1; }
+                renderPf();
+              });
+            });
+          } else {
+            document.getElementById("pfClosedWrap").innerHTML = "";
+          }
+        }
+        renderPf();
 
         /* Transactions */
         tx = d.transactions || {}; ts = tx.summary || {}; txRows = tx.rows || [];
@@ -1200,6 +1329,16 @@
           shown = shown.slice().sort(function(a, b){
             if (txSortMode === "old") return String(a.date).localeCompare(String(b.date));
             if (txSortMode === "pl") return (b.realizedPl || 0) - (a.realizedPl || 0);
+            if (txSortMode === "ticker") return String(a.ticker || "").localeCompare(String(b.ticker || ""))
+              || String(b.date).localeCompare(String(a.date));
+            if (txSortMode === "amount") return (b.total || 0) - (a.total || 0);
+            if (txSortMode === "loss") {
+              var al = a.realizedPl, bl = b.realizedPl;
+              if (al == null && bl == null) return 0;
+              if (al == null) return 1;
+              if (bl == null) return -1;
+              return al - bl;
+            }
             return String(b.date).localeCompare(String(a.date));
           });
           if (!shown.length) {
@@ -1207,8 +1346,9 @@
             return;
           }
           var out = "", lastDay = null;
+          var groupByDay = txSortMode === "new" || txSortMode === "old";
           shown.forEach(function(x){
-            if (x.date !== lastDay) {
+            if (groupByDay && x.date !== lastDay) {
               lastDay = x.date;
               var dayRows = shown.filter(function(y){ return y.date === lastDay; });
               var dayPl = dayRows.reduce(function(acc, y){ return acc + (y.realizedPl || 0); }, 0);
@@ -1291,12 +1431,49 @@
           if (r.change == null) return "—";
           return signed(r.change) + (r.changePct != null ? ' <span style="color:var(--faint)">(' + fmtPct(r.changePct) + ')</span>' : '');
         }
+        /* Sortable history tables: tap a header to sort, tap again to reverse. */
+        function hVal(r, key){
+          if (key === "date") return r.date || r.label || "";
+          if (key === "start") return r.startValue;
+          if (key === "end") return r.endValue;
+          if (key === "change") return r.change;
+          if (key === "spy") return r.spyPct;
+          if (key === "trades") return r.tradesCount;
+          return null;
+        }
+        function hCmp(a, b){
+          var av = hVal(a, hSortKey), bv = hVal(b, hSortKey);
+          if (av == null && bv == null) return 0;
+          if (av == null) return 1;
+          if (bv == null) return -1;
+          var c = (typeof av === "string" || typeof bv === "string")
+            ? String(av).localeCompare(String(bv)) : av - bv;
+          return hSortDir * c;
+        }
+        function hTh(key, label, num){
+          var on = hSortKey === key;
+          return '<th class="sortable' + (num ? ' num' : '') + '" data-hkey="' + key + '"' +
+            (on ? ' aria-sort="' + (hSortDir === 1 ? 'ascending' : 'descending') + '"' : '') +
+            ' title="Sort by ' + label + '">' + label +
+            '<span class="sdir">' + (on ? (hSortDir === 1 ? ' ▲' : ' ▼') : '') + '</span></th>';
+        }
+        function wireHistSort(){
+          document.querySelectorAll("#histBody th[data-hkey]").forEach(function(th){
+            th.addEventListener("click", function(){
+              var k = th.getAttribute("data-hkey");
+              if (hSortKey === k) { hSortDir = -hSortDir; } else { hSortKey = k; hSortDir = 1; }
+              renderHist();
+            });
+          });
+        }
         function renderHist(){
           var body = document.getElementById("histBody");
           var head = '<p style="margin-top:2px">History starts <b>' + (h.startDate ? fmtDateFull(h.startDate) : "—") + '</b> with the clean-slate ' +
             'balance locked as the start anchor — no backfill. Finished days freeze as snapshots.</p>';
           if (hMode === "Daily") {
-            var rows = (h.daily || []).slice().reverse().map(function(r){
+            var drows = (h.daily || []).slice().reverse();
+            if (hSortKey) drows.sort(hCmp);
+            var rows = drows.map(function(r){
               var tradeTxt = r.tradesCount ? String(r.tradesCount) : "0";
               if (r.trades && r.trades.length) {
                 var names = r.trades.map(function(t){ return typeof t === "string" ? t : (t.ticker || t.type || ""); }).filter(Boolean);
@@ -1310,12 +1487,16 @@
                 '<td>' + esc(tradeTxt) + '</td></tr>';
             }).join("");
             body.innerHTML = head +
-              '<div class="txwrap"><table class="htable"><thead><tr><th>Date</th><th class="num">Start</th>' +
-              '<th class="num">End</th><th class="num">Change</th><th class="num">SPY day</th>' +
-              '<th>Trades</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+              '<div class="txwrap"><table class="htable"><thead><tr>' +
+              hTh("date", "Date", false) + hTh("start", "Start", true) +
+              hTh("end", "End", true) + hTh("change", "Change", true) +
+              hTh("spy", "SPY day", true) + hTh("trades", "Trades", false) +
+              '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+            wireHistSort();
           } else {
-            var groups = hMode === "Weekly" ? (h.weekly || []) : (h.monthly || []);
-            var grows = groups.slice().reverse().map(function(g){
+            var grows0 = (hMode === "Weekly" ? (h.weekly || []) : (h.monthly || [])).slice().reverse();
+            if (hSortKey) grows0.sort(hCmp);
+            var grows = grows0.map(function(g){
               return '<tr><td>' + esc(g.label) + (g.partial ? ' <span class="kind verdict">TO DATE</span>' : '') + '</td>' +
                 '<td class="num">' + fmt(g.startValue) + '</td>' +
                 '<td class="num">' + fmt(g.endValue) + '</td>' +
@@ -1324,9 +1505,12 @@
                 '<td class="num">' + (g.tradesCount || 0) + '</td></tr>';
             }).join("");
             body.innerHTML = head +
-              '<div class="txwrap"><table class="htable"><thead><tr><th>Period</th><th class="num">Start</th>' +
-              '<th class="num">End</th><th class="num">Change</th><th class="num">SPY</th>' +
-              '<th class="num">Trades</th></tr></thead><tbody>' + grows + '</tbody></table></div>';
+              '<div class="txwrap"><table class="htable"><thead><tr>' +
+              hTh("date", "Period", false) + hTh("start", "Start", true) +
+              hTh("end", "End", true) + hTh("change", "Change", true) +
+              hTh("spy", "SPY", true) + hTh("trades", "Trades", true) +
+              '</tr></thead><tbody>' + grows + '</tbody></table></div>';
+            wireHistSort();
           }
         }
         var hdefs = ["Daily", "Weekly", "Monthly"];
