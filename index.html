@@ -147,6 +147,26 @@
       .fbtn:hover{border-color:var(--line);color:var(--text)}
       .fbtn.active{color:#04120a;background:var(--green);border-color:var(--green);font-weight:700}
 
+      /* Phone-first card lists (positions / transactions / history): one box
+         per item, vertical scroll, same .card look as the Monitor board. */
+      .pcard .psub{color:var(--muted);font-size:13.5px;margin-top:10px;line-height:1.5}
+      .pcard .pnl{font-family:var(--mono);font-size:16px;font-weight:700;margin-top:8px;font-variant-numeric:tabular-nums}
+      .pcard .pnl.g{color:var(--green)} .pcard .pnl.r{color:var(--red)}
+      .pcard .urgwhy{color:var(--muted);font-size:13.5px;line-height:1.5;margin-left:8px}
+      .kv .v.g{color:var(--green)} .kv .v.r{color:var(--red)}
+      .legrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:12px}
+      .legchip{font-family:var(--mono);font-size:12px;font-weight:700;padding:4px 9px;border-radius:6px;background:rgba(120,150,200,.12);border:1px solid var(--line-soft);color:var(--muted)}
+      .legchip.g{color:var(--green);border-color:rgba(34,229,132,.35);background:var(--green-dim)}
+      .legchip.r{color:var(--red);border-color:rgba(251,77,109,.35);background:var(--red-dim)}
+      .legarrow{color:var(--faint);font-size:12px}
+      .daylabel{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:22px 0 2px}
+      .daylabel:first-child{margin-top:6px}
+      .daylabel .g{color:var(--green)} .daylabel .r{color:var(--red)}
+      .txcard .whyline{display:block;font-size:13px;color:var(--faint);margin-top:6px;line-height:1.5}
+      .txcard .whydet{display:block;margin-top:6px;font-size:11.5px}
+      .txcard .whydet summary{cursor:pointer;color:var(--faint)}
+      .txcard .whyraw{display:block;font-family:var(--mono);font-size:10.5px;color:var(--faint);white-space:pre-wrap;word-break:break-word;margin-top:4px}
+
       .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px;margin-top:14px}
       @media (max-width:400px){ .grid{grid-template-columns:1fr} }
 
@@ -1189,7 +1209,8 @@
         } else {
           document.getElementById("pfPerf").innerHTML = "";
         }
-        function posRow(x, closed){
+        function posCard(x, closed){
+          var s = x.stock || {};
           var entry = x.entryPrice != null ? x.entryPrice : x.price;
           var cur = x.currentPrice != null ? x.currentPrice : x.current;
           var pl = closed ? (x.realizedPnl != null ? x.realizedPnl : (x.realizedPl != null ? x.realizedPl : x.pl))
@@ -1197,15 +1218,71 @@
           var plPct = closed ? (x.realizedPlPct != null ? x.realizedPlPct : x.plPct)
                              : (x.unrealizedPct != null ? x.unrealizedPct : x.plPct);
           var exit = x.exitPrice != null ? x.exitPrice : x.closePrice;
-          return '<tr><td>' + esc(x.ticker) + '</td><td>' + esc(x.track || "—") + '</td>' +
-            '<td class="num">' + (x.shares == null ? "—" : Number(x.shares).toLocaleString("en-US")) + '</td>' +
-            '<td class="num">' + fmt(entry) + '</td>' +
-            (closed ? '<td class="num">' + fmt(exit) + '</td>' : '<td class="num">' + fmt(cur) + '</td>') +
-            '<td class="num">' + fmt(x.currentValue != null ? x.currentValue : x.value) + '</td>' +
-            '<td class="num' + (pl == null ? "" : pl < 0 ? " neg" : pl > 0 ? " pos" : "") + '">' +
-              (pl == null ? "—" : signed(pl) + (plPct != null ? ' (' + fmtPct(plPct) + ')' : '')) + '</td>' +
-            (closed ? '<td class="num">' + (x.daysHeld == null ? "—" : x.daysHeld + 'd') + '</td>'
-                    : '<td>' + esc(x.urgency || x.exitUrgency || x.verdict || "—") + '</td>') + '</tr>';
+          var headVal = closed ? exit : cur;
+          var plCls = pl == null ? "" : pl < 0 ? " r" : pl > 0 ? " g" : "";
+          var sub = closed
+            ? ('Out ' + (x.exitDate ? fmtDate(x.exitDate) : "—") + (x.exitTime ? ' · ' + x.exitTime + ' ET' : '') + ' · ' + (x.daysHeld == null ? "—" : x.daysHeld + ' days held'))
+            : ('In ' + (x.entryDate ? fmtDate(x.entryDate) : "—") + (x.entryTime ? ' · ' + x.entryTime + ' ET' : '') + ' · ' + (x.daysHeld == null ? "—" : x.daysHeld + ' days held'));
+          var sharesTxt = (x.shares == null ? "—" : String(x.shares)) + ' sh @ ' + fmt(entry);
+          var urg = closed ? "" : (x.urgency || x.exitUrgency || "");
+          var urgCls = urg === "WATCH" ? " watch" : urg === "CAUTION" ? " caution" : urg === "EXIT" ? " exit" : " dim";
+          var out = '<article class="card pcard">' +
+            '<div class="card-top"><div><div class="tick">' + esc(x.ticker) + '</div>' +
+            '<div class="cname">' + esc(s.company || "") + (x.track ? ' · Track ' + esc(x.track) : '') + (x.track && s.listGroup ? ' · ' + esc(s.listGroup) : '') + '</div></div>' +
+            '<div class="price"><div class="p">' + fmt(headVal) + '</div></div></div>' +
+            '<div class="psub">' + esc(sub) + ' · ' + esc(sharesTxt) + '</div>' +
+            '<div class="pnl' + plCls + '">' + (pl == null ? "—" : signed(pl) + (plPct != null ? ' (' + fmtPct(plPct) + ')' : '')) + '</div>';
+          if (!closed && urg) {
+            out += '<div style="margin-top:10px"><span class="badge' + urgCls + '">' + esc(urg) + '</span>' +
+              (x.urgencyReason ? ' <span class="urgwhy">' + esc(x.urgencyReason) + '</span>' : '') + '</div>';
+          }
+          out += '<div class="kv"><div><div class="k">Cost basis</div><div class="v">' + fmt(x.costBasis) + '</div></div>' +
+            '<div><div class="k">Market value</div><div class="v">' + fmt(x.currentValue != null ? x.currentValue : x.value) + '</div></div>' +
+            '<div><div class="k">Since entry</div><div class="v">' + (plPct != null ? fmtPct(plPct) : "—") + '</div></div>' +
+            '<div><div class="k">' + (closed ? 'Realized' : 'Unrealized') + '</div><div class="v">' + (pl == null ? "—" : signed(pl)) + '</div></div></div>';
+          if (!closed) {
+            out += '<div class="kv"><div><div class="k">1D</div><div class="v' + (x.perf1d == null ? "" : x.perf1d < 0 ? " r" : x.perf1d > 0 ? " g" : "") + '">' + fmtPct(x.perf1d) + '</div></div>' +
+              '<div><div class="k">7D</div><div class="v' + (x.perf7d == null ? "" : x.perf7d < 0 ? " r" : x.perf7d > 0 ? " g" : "") + '">' + fmtPct(x.perf7d) + '</div></div>' +
+              '<div><div class="k">1M</div><div class="v' + (x.perf1m == null ? "" : x.perf1m < 0 ? " r" : x.perf1m > 0 ? " g" : "") + '">' + fmtPct(x.perf1m) + '</div></div>' +
+              '<div><div class="k">6M</div><div class="v' + (x.perf6m == null ? "" : x.perf6m < 0 ? " r" : x.perf6m > 0 ? " g" : "") + '">' + fmtPct(x.perf6m) + '</div></div></div>';
+            if (s.cascadeState) {
+              var legs = [["6M", s.tf6mScore], ["1M", s.tf1mScore], ["1W", s.tf1wScore], ["NOW", s.tfNowScore]];
+              out += '<div style="margin-top:14px;border-top:1px solid var(--line-soft);padding-top:12px">' +
+                '<div class="k" style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)">Cascade — this position\'s exit trigger</div>' +
+                '<div class="legrow">' + legs.map(function(l, i){
+                  return (i ? '<span class="legarrow">→</span>' : '') + '<span class="legchip' + (l[1] == null ? "" : l[1] < 0 ? " r" : l[1] > 0 ? " g" : "") + '">' + l[0] + ' ' + fmtScore(l[1]) + '</span>';
+                }).join("") +
+                '<span class="badge' + (s.cascadeState === "ALIGNED" ? " aligned" : " dim") + '" style="margin-top:0">' + esc(s.cascadeState) + '</span>' +
+                (s.cascadeBuyCount != null ? '<span style="color:var(--muted);font-size:13px">' + s.cascadeBuyCount + ' of 4 legs read Buy</span>' : '') +
+                '</div></div>';
+            }
+          }
+          if (x.analysisLine) out += '<p class="why">' + esc(x.analysisLine) + '</p>';
+          if (s.contextNote) out += '<div class="earn">' + esc(s.contextNote) + (s.contextUrl ? ' <a href="' + esc(s.contextUrl) + '">Source</a>' : '') + '</div>';
+          out += '</article>';
+          return out;
+        }
+        /* Sort pills for the card lists: tap a pill to sort, tap again to reverse.
+           Missing values always sort last (same pfCmp as the old tables). */
+        function pfPills(defs, activeKey, activeDir){
+          return '<div class="filters">' + defs.map(function(d){
+            var on = activeKey === d[0];
+            return '<button class="fbtn' + (on ? " active" : "") + '" data-sort="' + d[0] + '">' + d[1] +
+              (on ? (activeDir === 1 ? ' ▲' : ' ▼') : '') + '</button>';
+          }).join("") + '</div>';
+        }
+        function wirePfPills(container, isClosed){
+          container.querySelectorAll("[data-sort]").forEach(function(btn){
+            btn.addEventListener("click", function(){
+              var k = btn.getAttribute("data-sort");
+              if (isClosed) {
+                if (pfClosedSortKey === k) { pfClosedSortDir = -pfClosedSortDir; } else { pfClosedSortKey = k; pfClosedSortDir = 1; }
+              } else {
+                if (pfSortKey === k) { pfSortDir = -pfSortDir; } else { pfSortKey = k; pfSortDir = 1; }
+              }
+              renderPf();
+            });
+          });
         }
         /* Sortable position tables: tap a header to sort, tap again to reverse.
            Missing values always sort last. */
@@ -1233,69 +1310,33 @@
             ? String(av).localeCompare(String(bv)) : av - bv;
           return dir * c;
         }
-        function pfTh(key, label, num, activeKey, activeDir, attr){
-          var on = activeKey === key;
-          return '<th class="sortable' + (num ? ' num' : '') + '" ' + attr + '="' + key + '"' +
-            (on ? ' aria-sort="' + (activeDir === 1 ? 'ascending' : 'descending') + '"' : '') +
-            ' title="Sort by ' + label + '">' + label +
-            '<span class="sdir">' + (on ? (activeDir === 1 ? ' ▲' : ' ▼') : '') + '</span></th>';
-        }
         function renderPf(){
+          var openWrap = document.getElementById("pfBody");
+          var closedWrap = document.getElementById("pfClosedWrap");
           if (!pf.open || !pf.open.length) {
-            document.getElementById("pfBody").innerHTML =
+            openWrap.innerHTML =
               '<h3>No positions yet</h3>' +
-              '<p>Positions appear here automatically when the system opens one. Buys run at <b>$5,000 per name</b>, ' +
-              'at most <b>3 new positions a day</b> across both tracks, and buys are held when earnings ' +
-              'fall within 3 trading days of the print.</p>';
+              '<p>Positions appear here automatically when the system opens one. Buys run at <b>$5,000 per name</b>. ' +
+              'New entries run until buying power can no longer cover another $5,000 position; sells, covers and exits ' +
+              'are never blocked. There is no earnings guard — entries fire when their signals fire.</p>';
           } else {
             var openSorted = pf.open.slice();
             if (pfSortKey) openSorted.sort(function(a, b){ return pfCmp(a, b, pfSortKey, false, pfSortDir); });
-            document.getElementById("pfBody").innerHTML =
-              '<table class="htable"><thead><tr>' +
-              pfTh("ticker", "Ticker", false, pfSortKey, pfSortDir, "data-pfkey") +
-              pfTh("track", "Track", false, pfSortKey, pfSortDir, "data-pfkey") +
-              pfTh("shares", "Shares", true, pfSortKey, pfSortDir, "data-pfkey") +
-              pfTh("entry", "Entry", true, pfSortKey, pfSortDir, "data-pfkey") +
-              pfTh("current", "Current", true, pfSortKey, pfSortDir, "data-pfkey") +
-              pfTh("value", "Value", true, pfSortKey, pfSortDir, "data-pfkey") +
-              pfTh("pl", "P&amp;L", true, pfSortKey, pfSortDir, "data-pfkey") +
-              pfTh("urgency", "Exit urgency", false, pfSortKey, pfSortDir, "data-pfkey") +
-              '</tr></thead><tbody>' +
-              openSorted.map(function(x){ return posRow(x, false); }).join("") + '</tbody></table>';
-            document.querySelectorAll("#pfBody th[data-pfkey]").forEach(function(th){
-              th.addEventListener("click", function(){
-                var k = th.getAttribute("data-pfkey");
-                if (pfSortKey === k) { pfSortDir = -pfSortDir; } else { pfSortKey = k; pfSortDir = 1; }
-                renderPf();
-              });
-            });
+            openWrap.innerHTML = pfPills([["ticker", "Ticker"], ["track", "Track"], ["shares", "Shares"], ["entry", "Entry"], ["current", "Current"], ["value", "Value"], ["pl", "P&L"], ["held", "Days held"], ["urgency", "Exit urgency"]], pfSortKey, pfSortDir) +
+              '<div class="grid">' + openSorted.map(function(x){ return posCard(x, false); }).join("") + '</div>';
+            wirePfPills(openWrap, false);
           }
           if (pf.closed && pf.closed.length) {
             var closedSorted = pf.closed.slice();
             if (pfClosedSortKey) closedSorted.sort(function(a, b){ return pfCmp(a, b, pfClosedSortKey, true, pfClosedSortDir); });
-            document.getElementById("pfClosedWrap").innerHTML =
+            closedWrap.innerHTML =
               '<div class="sec-head" style="margin-top:32px"><span class="sec-kicker">Closed</span>' +
               '<h2 style="font-size:22px">Closed Positions</h2></div>' +
-              '<div class="scope txwrap"><table class="htable"><thead><tr>' +
-              pfTh("ticker", "Ticker", false, pfClosedSortKey, pfClosedSortDir, "data-pfckey") +
-              pfTh("track", "Track", false, pfClosedSortKey, pfClosedSortDir, "data-pfckey") +
-              pfTh("shares", "Shares", true, pfClosedSortKey, pfClosedSortDir, "data-pfckey") +
-              pfTh("entry", "Entry", true, pfClosedSortKey, pfClosedSortDir, "data-pfckey") +
-              pfTh("exit", "Exit", true, pfClosedSortKey, pfClosedSortDir, "data-pfckey") +
-              pfTh("value", "Value", true, pfClosedSortKey, pfClosedSortDir, "data-pfckey") +
-              pfTh("pl", "Realized P&amp;L", true, pfClosedSortKey, pfClosedSortDir, "data-pfckey") +
-              pfTh("held", "Held", true, pfClosedSortKey, pfClosedSortDir, "data-pfckey") +
-              '</tr></thead><tbody>' +
-              closedSorted.map(function(x){ return posRow(x, true); }).join("") + '</tbody></table></div>';
-            document.querySelectorAll("#pfClosedWrap th[data-pfckey]").forEach(function(th){
-              th.addEventListener("click", function(){
-                var k = th.getAttribute("data-pfckey");
-                if (pfClosedSortKey === k) { pfClosedSortDir = -pfClosedSortDir; } else { pfClosedSortKey = k; pfClosedSortDir = 1; }
-                renderPf();
-              });
-            });
+              pfPills([["ticker", "Ticker"], ["track", "Track"], ["shares", "Shares"], ["entry", "Entry"], ["exit", "Exit"], ["value", "Value"], ["pl", "Realized P&L"], ["held", "Held"]], pfClosedSortKey, pfClosedSortDir) +
+              '<div class="grid">' + closedSorted.map(function(x){ return posCard(x, true); }).join("") + '</div>';
+            wirePfPills(closedWrap, true);
           } else {
-            document.getElementById("pfClosedWrap").innerHTML = "";
+            closedWrap.innerHTML = "";
           }
         }
         renderPf();
@@ -1353,40 +1394,37 @@
           }
           var out = "", lastDay = null;
           var groupByDay = txSortMode === "new" || txSortMode === "old";
+          if (!groupByDay) out += '<div class="grid">';
           shown.forEach(function(x){
             if (groupByDay && x.date !== lastDay) {
+              if (lastDay !== null) out += '</div>';
               lastDay = x.date;
               var dayRows = shown.filter(function(y){ return y.date === lastDay; });
               var dayPl = dayRows.reduce(function(acc, y){ return acc + (y.realizedPl || 0); }, 0);
               var hasPl = dayRows.some(function(y){ return y.realizedPl != null; });
-              out += '<tr class="dayhead"><td colspan="8">' + (lastDay ? fmtDateFull(lastDay) : "—") +
+              out += '<div class="daylabel">' + (lastDay ? fmtDateFull(lastDay) : "—") +
                 ' · ' + dayRows.length + (dayRows.length === 1 ? ' fill' : ' fills') +
-                (hasPl ? ' · realized <span class="' + (dayPl < 0 ? "neg" : dayPl > 0 ? "pos" : "") + '">' + signed(dayPl) + '</span>' : '') +
-                '</td></tr>';
+                (hasPl ? ' · realized <span class="' + (dayPl < 0 ? "r" : dayPl > 0 ? "g" : "") + '">' + signed(dayPl) + '</span>' : '') +
+                '</div><div class="grid">';
             }
             var isExit = x.type === "SELL" || x.type === "COVER";
-            var plCell = "—";
-            if (isExit && x.realizedPl != null) {
-              plCell = signed(x.realizedPl) +
-                (x.realizedPlPct != null ? ' <span style="color:var(--faint)">(' + fmtPct(x.realizedPlPct) + ')</span>' : '');
-            }
-            var plCls2 = isExit && x.realizedPl != null ? (x.realizedPl < 0 ? " neg" : x.realizedPl > 0 ? " pos" : "") : "";
-            out += '<tr><td>' + (x.date ? fmtDate(x.date) : "—") + (x.time ? '<br><span style="opacity:.75;font-size:11px">' + x.time + ' ET</span>' : '') + '</td>' +
-              '<td><span class="ttype ' + String(x.type || "").toLowerCase() + '">' + esc(x.type) + '</span></td>' +
-              '<td><b style="font-family:var(--mono)">' + esc(x.ticker) + '</b>' +
-                (x.track ? ' <span style="color:var(--faint)">· Track ' + esc(x.track) + '</span>' : '') +
-                (x.why ? '<span class="whyline">' + esc(x.why) + '</span>' : '') +
-                (x.whyRaw ? '<details class="whydet"><summary>details</summary><span class="whyraw">' + esc(x.whyRaw) + '</span></details>' : '') + '</td>' +
-              '<td class="num">' + (x.shares == null ? "—" : Number(x.shares).toLocaleString("en-US")) + '</td>' +
-              '<td class="num">' + fmt(x.price) + '</td>' +
-              '<td class="num">' + (isExit && x.entryPrice != null ? fmt(x.entryPrice) : "—") + '</td>' +
-              '<td class="num">' + fmt(x.total) + '</td>' +
-              '<td class="num pl' + plCls2 + '">' + plCell + '</td></tr>';
+            out += '<article class="card txcard">' +
+              '<div class="card-top"><div><div class="tick">' + esc(x.ticker) + '</div>' +
+              '<div class="cname">' + (x.date ? fmtDate(x.date) : "—") + (x.time ? ' · ' + x.time + ' ET' : '') +
+              (x.track ? ' · Track ' + esc(x.track) : '') + '</div></div>' +
+              '<div class="price"><div class="p">' + fmt(x.total) + '</div></div></div>' +
+              '<div style="margin-top:10px"><span class="ttype ' + String(x.type || "").toLowerCase() + '">' + esc(x.type) + '</span></div>' +
+              '<div class="kv"><div><div class="k">Shares</div><div class="v">' + (x.shares == null ? "—" : Number(x.shares).toLocaleString("en-US")) + '</div></div>' +
+              '<div><div class="k">Price</div><div class="v">' + fmt(x.price) + '</div></div>' +
+              '<div><div class="k">Orig. entry</div><div class="v">' + (isExit && x.entryPrice != null ? fmt(x.entryPrice) : "—") + '</div></div>' +
+              '<div><div class="k">Realized P&L</div><div class="v">' + (isExit && x.realizedPl != null ? signed(x.realizedPl) +
+              (x.realizedPlPct != null ? ' (' + fmtPct(x.realizedPlPct) + ')' : '') : "—") + '</div></div></div>' +
+              (x.why ? '<span class="whyline">' + esc(x.why) + '</span>' : '') +
+              (x.whyRaw ? '<details class="whydet"><summary>details</summary><span class="whyraw">' + esc(x.whyRaw) + '</span></details>' : '') +
+              '</article>';
           });
-          body.innerHTML = '<table class="htable"><thead><tr><th>Date</th><th>Type</th><th>Ticker</th>' +
-            '<th class="num">Shares</th><th class="num">Price</th><th class="num">Orig. entry</th>' +
-            '<th class="num">Total</th><th class="num">Realized P&amp;L</th></tr></thead>' +
-            '<tbody>' + out + '</tbody></table>';
+          out += '</div>';
+          body.innerHTML = out;
         }
         var tfdefs = [["ALL", "All · " + (ts.total || 0)], ["BUY", "Buys · " + (ts.buys || 0)],
                       ["SELL", "Sells · " + (ts.sells || 0)], ["SHORT", "Shorts · " + (ts.shorts || 0)],
@@ -1456,67 +1494,57 @@
             ? String(av).localeCompare(String(bv)) : av - bv;
           return hSortDir * c;
         }
-        function hTh(key, label, num){
-          var on = hSortKey === key;
-          return '<th class="sortable' + (num ? ' num' : '') + '" data-hkey="' + key + '"' +
-            (on ? ' aria-sort="' + (hSortDir === 1 ? 'ascending' : 'descending') + '"' : '') +
-            ' title="Sort by ' + label + '">' + label +
-            '<span class="sdir">' + (on ? (hSortDir === 1 ? ' ▲' : ' ▼') : '') + '</span></th>';
-        }
-        function wireHistSort(){
-          document.querySelectorAll("#histBody th[data-hkey]").forEach(function(th){
-            th.addEventListener("click", function(){
-              var k = th.getAttribute("data-hkey");
-              if (hSortKey === k) { hSortDir = -hSortDir; } else { hSortKey = k; hSortDir = 1; }
-              renderHist();
-            });
-          });
-        }
         function renderHist(){
           var body = document.getElementById("histBody");
           var head = '<p style="margin-top:2px">History starts <b>' + (h.startDate ? fmtDateFull(h.startDate) : "—") + '</b> with the clean-slate ' +
             'balance locked as the start anchor — no backfill. Finished days freeze as snapshots.</p>';
+          var pills = '<div class="filters">' + [["date", "Date"], ["start", "Start"], ["end", "End"], ["change", "Change"], ["spy", "SPY"], ["trades", "Trades"]].map(function(d){
+            var on = hSortKey === d[0];
+            return '<button class="fbtn' + (on ? " active" : "") + '" data-hsort="' + d[0] + '">' + d[1] +
+              (on ? (hSortDir === 1 ? ' ▲' : ' ▼') : '') + '</button>';
+          }).join("") + '</div>';
+          var wire = function(){
+            body.querySelectorAll("[data-hsort]").forEach(function(btn){
+              btn.addEventListener("click", function(){
+                var k = btn.getAttribute("data-hsort");
+                if (hSortKey === k) { hSortDir = -hSortDir; } else { hSortKey = k; hSortDir = 1; }
+                renderHist();
+              });
+            });
+          };
           if (hMode === "Daily") {
             var drows = (h.daily || []).slice().reverse();
             if (hSortKey) drows.sort(hCmp);
-            var rows = drows.map(function(r){
+            var cards = drows.map(function(r){
               var tradeTxt = r.tradesCount ? String(r.tradesCount) : "0";
               if (r.trades && r.trades.length) {
                 var names = r.trades.map(function(t){ return typeof t === "string" ? t : (t.ticker || t.type || ""); }).filter(Boolean);
                 if (names.length) tradeTxt += ' · ' + names.join(", ");
               }
-              return '<tr><td>' + fmtDateFull(r.date) + '</td>' +
-                '<td class="num">' + fmt(r.startValue) + '</td>' +
-                '<td class="num">' + fmt(r.endValue) + '</td>' +
-                '<td class="num' + (r.change == null ? "" : r.change < 0 ? " neg" : r.change > 0 ? " pos" : "") + '">' + chgCell(r) + '</td>' +
-                '<td class="num">' + fmtPct(r.spyPct) + '</td>' +
-                '<td>' + esc(tradeTxt) + '</td></tr>';
+              return '<article class="card"><div class="card-top"><div><div class="tick">' + fmtDateFull(r.date) + '</div>' +
+                '<div class="cname">' + esc(tradeTxt) + (r.snapshot ? ' · snapshot' : '') + '</div></div>' +
+                '<div class="price"><div class="p">' + fmt(r.endValue) + '</div></div></div>' +
+                '<div class="kv"><div><div class="k">Start</div><div class="v">' + fmt(r.startValue) + '</div></div>' +
+                '<div><div class="k">End</div><div class="v">' + fmt(r.endValue) + '</div></div>' +
+                '<div><div class="k">Change</div><div class="v">' + chgCell(r) + '</div></div>' +
+                '<div><div class="k">SPY day</div><div class="v">' + fmtPct(r.spyPct) + '</div></div></div></article>';
             }).join("");
-            body.innerHTML = head +
-              '<div class="txwrap"><table class="htable"><thead><tr>' +
-              hTh("date", "Date", false) + hTh("start", "Start", true) +
-              hTh("end", "End", true) + hTh("change", "Change", true) +
-              hTh("spy", "SPY day", true) + hTh("trades", "Trades", false) +
-              '</tr></thead><tbody>' + rows + '</tbody></table></div>';
-            wireHistSort();
+            body.innerHTML = head + pills + '<div class="grid">' + cards + '</div>';
+            wire();
           } else {
             var grows0 = (hMode === "Weekly" ? (h.weekly || []) : (h.monthly || [])).slice().reverse();
             if (hSortKey) grows0.sort(hCmp);
-            var grows = grows0.map(function(g){
-              return '<tr><td>' + esc(g.label) + (g.partial ? ' <span class="kind verdict">TO DATE</span>' : '') + '</td>' +
-                '<td class="num">' + fmt(g.startValue) + '</td>' +
-                '<td class="num">' + fmt(g.endValue) + '</td>' +
-                '<td class="num' + (g.change < 0 ? " neg" : g.change > 0 ? " pos" : "") + '">' + chgCell(g) + '</td>' +
-                '<td class="num">' + fmtPct(g.spyPct) + '</td>' +
-                '<td class="num">' + (g.tradesCount || 0) + '</td></tr>';
+            var gcars = grows0.map(function(g){
+              return '<article class="card"><div class="card-top"><div><div class="tick">' + esc(g.label) + '</div>' +
+                '<div class="cname">' + (g.tradesCount || 0) + ' trades' + (g.partial ? ' · to date' : '') + '</div></div>' +
+                '<div class="price"><div class="p">' + fmt(g.endValue) + '</div></div></div>' +
+                '<div class="kv"><div><div class="k">Start</div><div class="v">' + fmt(g.startValue) + '</div></div>' +
+                '<div><div class="k">End</div><div class="v">' + fmt(g.endValue) + '</div></div>' +
+                '<div><div class="k">Change</div><div class="v">' + chgCell(g) + '</div></div>' +
+                '<div><div class="k">SPY</div><div class="v">' + fmtPct(g.spyPct) + '</div></div></div></article>';
             }).join("");
-            body.innerHTML = head +
-              '<div class="txwrap"><table class="htable"><thead><tr>' +
-              hTh("date", "Period", false) + hTh("start", "Start", true) +
-              hTh("end", "End", true) + hTh("change", "Change", true) +
-              hTh("spy", "SPY", true) + hTh("trades", "Trades", true) +
-              '</tr></thead><tbody>' + grows + '</tbody></table></div>';
-            wireHistSort();
+            body.innerHTML = head + pills + '<div class="grid">' + gcars + '</div>';
+            wire();
           }
         }
         var hdefs = ["Daily", "Weekly", "Monthly"];
