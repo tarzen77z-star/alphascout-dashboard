@@ -1267,8 +1267,7 @@
         function pfPills(defs, activeKey, activeDir){
           return '<div class="filters">' + defs.map(function(d){
             var on = activeKey === d[0];
-            return '<button class="fbtn' + (on ? " active" : "") + '" data-sort="' + d[0] + '">' + d[1] +
-              (on ? (activeDir === 1 ? ' ▲' : ' ▼') : '') + '</button>';
+            return '<button class="fbtn' + (on ? " active" : "") + '" data-sort="' + d[0] + '">' + d[1] + '</button>';
           }).join("") + '</div>';
         }
         function wirePfPills(container, isClosed){
@@ -1500,8 +1499,7 @@
             'balance locked as the start anchor — no backfill. Finished days freeze as snapshots.</p>';
           var pills = '<div class="filters">' + [["date", "Date"], ["start", "Start"], ["end", "End"], ["change", "Change"], ["spy", "SPY"], ["trades", "Trades"]].map(function(d){
             var on = hSortKey === d[0];
-            return '<button class="fbtn' + (on ? " active" : "") + '" data-hsort="' + d[0] + '">' + d[1] +
-              (on ? (hSortDir === 1 ? ' ▲' : ' ▼') : '') + '</button>';
+            return '<button class="fbtn' + (on ? " active" : "") + '" data-hsort="' + d[0] + '">' + d[1] + '</button>';
           }).join("") + '</div>';
           var wire = function(){
             body.querySelectorAll("[data-hsort]").forEach(function(btn){
