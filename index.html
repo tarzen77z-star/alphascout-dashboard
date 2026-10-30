@@ -1165,7 +1165,9 @@
           '<div class="stat"><div class="n' + plClsM(ps.unrealizedPnl) + '">' + signed(ps.unrealizedPnl || 0) +
             (ps.unrealizedPct != null ? ' <span style="font-size:14px">(' + fmtPct(ps.unrealizedPct) + ')</span>' : '') +
             '</div><div class="l">Unrealized P&amp;L</div></div>' +
-          '<div class="stat"><div class="n' + plClsM(ps.realizedPnl) + '">' + signed(ps.realizedPnl || 0) + '</div><div class="l">Realized P&amp;L</div></div>';
+          '<div class="stat"><div class="n' + plClsM(ps.realizedPnl) + '">' + signed(ps.realizedPnl || 0) +
+            (ps.realizedPct != null ? ' <span style="font-size:14px">(' + fmtPct(ps.realizedPct) + ')</span>' : '') +
+            '</div><div class="l">Realized P&amp;L</div></div>';
         document.getElementById("pfStats2").innerHTML =
           '<div class="stat"><div class="n">' + (ps.openCount || 0) + '</div><div class="l">Open positions</div></div>' +
           '<div class="stat"><div class="n">' + (ps.closedCount || 0) + '</div><div class="l">Closed trades</div></div>' +
@@ -1302,7 +1304,7 @@
           return '<div class="stat"><div class="n">' + esc(x.ticker || "—") + ' ' + v + '</div><div class="l">' + label + '</div></div>';
         }
         document.getElementById("txStats").innerHTML =
-          '<div class="stat"><div class="n' + plClsM(ts.realizedPnl) + '">' + (ts.realizedPnl == null ? "—" : signed(ts.realizedPnl)) + '</div><div class="l">Realized P&amp;L</div></div>' +
+          '<div class="stat"><div class="n' + plClsM(ts.realizedPnl) + '">' + (ts.realizedPnl == null ? "—" : signed(ts.realizedPnl) + (ts.realizedPct != null ? ' <span style="font-size:14px">(' + fmtPct(ts.realizedPct) + ')</span>' : '')) + '</div><div class="l">Realized P&amp;L</div></div>' +
           '<div class="stat"><div class="n">' + (ts.winRate == null ? "—" : ts.winRate + "%") + '</div><div class="l">Win rate · ' + (ts.wins || 0) + 'W – ' + (ts.losses || 0) + 'L</div></div>' +
           txBest(ts.bestTrade, "Best trade") + txBest(ts.worstTrade, "Worst trade") +
           '<div class="stat"><div class="n">' + (ts.total || 0) + '</div><div class="l">Total transactions</div></div>';
