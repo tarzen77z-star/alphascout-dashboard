@@ -1522,7 +1522,7 @@
                 if (names.length) tradeTxt += ' · ' + names.join(", ");
               }
               return '<article class="card"><div class="card-top"><div><div class="tick">' + fmtDateFull(r.date) + '</div>' +
-                '<div class="cname">' + esc(tradeTxt) + (r.snapshot ? ' · snapshot' : '') + '</div></div>' +
+                '<div class="cname">' + esc(tradeTxt) + (r.snapshot ? ' · snapshot' : ' · in progress') + '</div></div>' +
                 '<div class="price"><div class="p">' + fmt(r.endValue) + '</div></div></div>' +
                 '<div class="kv"><div><div class="k">Start</div><div class="v">' + fmt(r.startValue) + '</div></div>' +
                 '<div><div class="k">End</div><div class="v">' + fmt(r.endValue) + '</div></div>' +
