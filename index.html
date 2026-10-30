@@ -1156,7 +1156,11 @@
         pf = d.portfolio || {}; ps = pf.summary || {};
         function tradeStat(x, label){
           if (!x) return '<div class="stat"><div class="n">—</div><div class="l">' + label + '</div></div>';
-          var v = x.plPct != null ? fmtPct(x.plPct) : (x.pl != null ? signed(x.pl) : (x.realizedPl != null ? signed(x.realizedPl) : "—"));
+          /* Absolute dollars lead (every trade is $5k in, so the $ is
+             the readable number); the % rides along in parens. */
+          var amt = x.pl != null ? x.pl : (x.realizedPl != null ? x.realizedPl : (x.pnl != null ? x.pnl : null));
+          var pctv = x.plPct != null ? x.plPct : (x.realizedPlPct != null ? x.realizedPlPct : (x.pct != null ? x.pct : null));
+          var v = amt != null ? signed(amt) + (pctv != null ? ' <span style="font-size:14px">(' + fmtPct(pctv) + ')</span>' : '') : (pctv != null ? fmtPct(pctv) : "—");
           return '<div class="stat"><div class="n">' + esc(x.ticker || "—") + ' ' + v + '</div><div class="l">' + label + '</div></div>';
         }
         document.getElementById("pfStats").innerHTML =
@@ -1178,10 +1182,10 @@
           document.getElementById("pfPerf").innerHTML = '<div class="stats">' + wins.map(function(w){
             return '<div class="stat"><div class="n' + plClsM(w.portfolioPct) + '">' + fmtPct(w.portfolioPct) + '</div>' +
               '<div class="l">' + esc(w.label) + ' · Portfolio</div>' +
-              '<div class="l">SPY ' + fmtPct(w.spyPct) + '</div></div>';
+              '<div class="l">SPY ' + fmtPct(w.spyPct) + '</div>' +
+              (w.note ? '<div class="l" style="text-transform:none;letter-spacing:0">' + esc(w.note) + '</div>' : '') + '</div>';
           }).join("") + '</div>' +
-          (wins[0].note ? '<p class="note" style="margin-top:2px">' + esc(wins[0].note) +
-            ' Performance windows (1 day / 7 days / 1 month / 6 months) start once the first position opens, shown next to the S&amp;P 500 (SPY) move for the same window.</p>' : '');
+          '<p class="note" style="margin-top:2px">How the math works: for a window the portfolio has actually lived, the return is the positions held since before that window, then vs now, with SPY over the same sessions. A window longer than the portfolio\'s whole life has no return of its own yet — those windows show the return since the start balance instead, the same number on each, with SPY measured over that same short span.</p>';
         } else {
           document.getElementById("pfPerf").innerHTML = "";
         }
