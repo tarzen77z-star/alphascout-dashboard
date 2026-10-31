@@ -299,6 +299,7 @@
         background:var(--panel);padding:20px 22px;
         backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
       }
+      .scope-plain{margin-top:0;border:0;background:transparent;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none}
       .scope h3{margin:0 0 8px;font-size:17px;font-weight:700}
       .scope p{margin:0;color:var(--muted);font-size:14.5px;max-width:780px}
       .scope p + p{margin-top:8px}
@@ -538,7 +539,7 @@
             <span class="sec-kicker">Positions</span>
             <h2 style="font-size:22px">Open Positions</h2>
           </div>
-          <div class="scope" id="pfBody"></div>
+          <div class="scope scope-plain" id="pfBody"></div>
           <div id="pfClosedWrap"></div>
         </section>
       </div>
