@@ -543,6 +543,7 @@
           </div>
           <div class="stats" id="pfStats"></div>
           <div class="stats" id="pfStats2"></div>
+          <div class="stats" id="pfRetStats"></div>
           <div class="sec-head" style="margin-top:32px">
             <span class="sec-kicker">Performance</span>
             <h2 style="font-size:22px">Performance vs S&amp;P 500 (SPY)</h2>
@@ -594,6 +595,7 @@
           </div>
           <div class="stats" id="histToday"></div>
           <div class="stats" id="histStats"></div>
+          <div class="stats" id="histRetStats"></div>
           <div class="stats" id="histStats2"></div>
           <div class="sec-head" style="margin-top:32px">
             <span class="sec-kicker">Equity Curve</span>
@@ -626,6 +628,22 @@
       }
       function signed(n){ return (n > 0 ? "+" : n < 0 ? "−" : "") + fmt(Math.abs(n)); }
       function fmtPct(v){ return v == null ? "—" : (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(2) + "%"; }
+      /* Return on Equity / Return on Deployed Capital cards. Both are computed
+         live from the loaded data: gain = history totalChange, equity base =
+         history startBalance, deployed base = portfolio current value (open
+         positions market value). A missing denominator shows a dash. */
+      function retCards(gain, startBal, deployed){
+        function one(label, pct, math){
+          return '<div class="stat"><div class="n' + plClsM(pct) + '">' + (pct == null ? "—" : fmtPct(pct)) + '</div>' +
+            '<div class="l">' + label + '</div>' +
+            '<div class="l" style="text-transform:none;letter-spacing:0">' + math + '</div></div>';
+        }
+        var roe = (gain != null && startBal) ? gain / startBal * 100 : null;
+        var rodc = (gain != null && deployed) ? gain / deployed * 100 : null;
+        var roeMath = (gain != null && startBal) ? signed(gain) + " total gain ÷ " + fmt(startBal) + " starting balance" : "—";
+        var rodcMath = (gain != null && deployed) ? signed(gain) + " total gain ÷ " + fmt(deployed) + " open positions value" : "—";
+        return one("Return on Equity", roe, roeMath) + one("Return on Deployed Capital", rodc, rodcMath);
+      }
       function fmtScore(v){ return v == null ? "—" : (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(2); }
       function plClsM(v){ return v == null || v === 0 ? "" : v < 0 ? " r" : " g"; }
 
@@ -1213,6 +1231,8 @@
           '<div class="stat"><div class="n">' + (ps.closedCount || 0) + '</div><div class="l">Closed trades</div></div>' +
           '<div class="stat"><div class="n">' + (ps.winRate == null ? "—" : ps.winRate + "%") + '</div><div class="l">Win rate (closed)</div></div>' +
           tradeStat(ps.best, "Best closed") + tradeStat(ps.worst, "Worst closed");
+        document.getElementById("pfRetStats").innerHTML =
+          retCards((d.history || {}).totalChange, (d.history || {}).startBalance, ps.currentValue);
         var wins = pf.windows || [];
         if (wins.length) {
           document.getElementById("pfPerf").innerHTML = '<div class="stats">' + wins.map(function(w){
@@ -1478,6 +1498,8 @@
           '<div class="stat"><div class="n' + plClsM(h.totalChange) + '">' + signed(h.totalChange || 0) +
             '</div><div class="l">Change since start · ' + fmtPct(h.totalChangePct) + '</div></div>' +
           '<div class="stat"><div class="n">' + (h.daily ? h.daily.length : 0) + '</div><div class="l">Days recorded</div></div>';
+        document.getElementById("histRetStats").innerHTML =
+          retCards(h.totalChange, h.startBalance, ((d.portfolio || {}).summary || {}).currentValue);
         document.getElementById("histStats2").innerHTML =
           dayCard(hs.bestDay, "Best day") + dayCard(hs.worstDay, "Worst day") +
           '<div class="stat"><div class="n' + plClsM(hs.avgChange) + '">' +
