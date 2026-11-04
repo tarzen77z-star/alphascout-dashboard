@@ -181,6 +181,19 @@
       }
       .card.click{cursor:pointer;transition:border-color .15s ease}
       .card.click:hover{border-color:rgba(34,229,132,.45)}
+      .today-card{display:block;width:100%;text-align:left;cursor:pointer;
+        -webkit-appearance:none;appearance:none;
+        border:1px solid rgba(34,229,132,.5);border-radius:var(--radius);
+        background:var(--panel);padding:18px 18px 15px;margin:20px 0 6px;
+        color:var(--text);font-family:var(--sans);transition:border-color .15s ease}
+      .today-card:hover{border-color:rgba(34,229,132,.8)}
+      .today-label{display:block;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+      .today-change{display:block;font-family:var(--mono);font-size:34px;font-weight:700;line-height:1.15;margin-top:6px;font-variant-numeric:tabular-nums}
+      .today-change.g{color:var(--green)} .today-change.r{color:var(--red)}
+      .today-sub{display:block;color:var(--muted);font-size:13.5px;margin-top:6px}
+      .today-trades{display:block;color:var(--muted);font-size:13.5px;margin-top:12px;line-height:1.6}
+      .row-detail{margin-top:12px;color:var(--muted);font-size:13.5px;line-height:1.7}
+      .row-detail .k{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
       .card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
       .tick{font-family:var(--mono);font-size:21px;font-weight:700;letter-spacing:.02em;line-height:1.1}
       .cname{color:var(--muted);font-size:13.5px;margin-top:2px}
@@ -579,14 +592,16 @@
             <span class="sec-kicker">History</span>
             <h2>Balance History</h2>
           </div>
+          <div class="stats" id="histToday"></div>
           <div class="stats" id="histStats"></div>
           <div class="stats" id="histStats2"></div>
           <div class="sec-head" style="margin-top:32px">
             <span class="sec-kicker">Equity Curve</span>
             <h2 style="font-size:22px">Balance Over Time</h2>
           </div>
-          <div class="eqbox" id="histEquity"></div>
           <div class="filters" role="group" aria-label="History period" id="histToggle"></div>
+          <p class="sec-sub" id="histChartCaption"></p>
+          <div class="eqbox" id="histEquity"></div>
           <div class="scope" id="histBody"></div>
         </section>
       </div>
@@ -1470,7 +1485,51 @@
           '<div class="stat"><div class="n g">' + (hs.greenDays || 0) + '</div><div class="l">Green days</div></div>' +
           '<div class="stat"><div class="n r">' + (hs.redDays || 0) + '</div><div class="l">Red days</div></div>' +
           '<div class="stat"><div class="n">' + (hs.flatDays || 0) + '</div><div class="l">Flat days</div></div>';
-        document.getElementById("histEquity").innerHTML = equityChart(h.equitySeries);
+        /* Today card: live change = current balance − yesterday's frozen end. */
+        var frozenRows = (h.daily || []).filter(function(r){ return r.snapshot; });
+        var liveRow = null;
+        (h.daily || []).forEach(function(r){ if (r.live) liveRow = r; });
+        var yEnd = frozenRows.length ? frozenRows[frozenRows.length - 1].endValue : null;
+        var todayStart = (yEnd != null) ? yEnd : (liveRow ? liveRow.startValue : null);
+        var todayEnd = h.currentBalance;
+        var todayChg = (todayStart != null && todayEnd != null) ? todayEnd - todayStart : (liveRow ? liveRow.change : null);
+        var todayPct = (liveRow && liveRow.changePct != null) ? liveRow.changePct :
+          ((todayStart && todayChg != null) ? todayChg / todayStart * 100 : null);
+        var todayTrades = liveRow ? (liveRow.trades || []) : [];
+        var todayCount = liveRow ? (liveRow.tradesCount || 0) : 0;
+        var todayLabel = liveRow ? "Today · in progress" : "Latest day";
+        var todayDate = liveRow ? fmtDateFull(liveRow.date) : (h.lastDate ? fmtDateFull(h.lastDate) : "");
+        document.getElementById("histToday").innerHTML =
+          '<button class="today-card" id="histTodayBtn" aria-expanded="false">' +
+          '<span class="today-label">' + esc(todayLabel) + (todayDate ? ' · ' + esc(todayDate) : '') + '</span>' +
+          '<span class="today-change' + plClsM(todayChg) + '">' + signed(todayChg == null ? 0 : todayChg) +
+            ' <span style="font-size:20px">(' + fmtPct(todayPct) + ')</span></span>' +
+          '<span class="today-sub">' + fmt(todayStart) + ' → ' + fmt(todayEnd) +
+            (liveRow && liveRow.spyPct != null ? ' · SPY ' + fmtPct(liveRow.spyPct) : '') +
+            ' · ' + todayCount + ' trades · tap to see trades</span>' +
+          '<span class="today-trades hidden" id="histTodayTrades">' +
+            (todayTrades.length ? esc(todayTrades.join(" · ")) : 'No trades yet today.') + '</span>' +
+          '</button>';
+        document.getElementById("histTodayBtn").addEventListener("click", function(){
+          var t = document.getElementById("histTodayTrades");
+          var btn = document.getElementById("histTodayBtn");
+          var hidden = t.classList.toggle("hidden");
+          btn.setAttribute("aria-expanded", hidden ? "false" : "true");
+        });
+        /* Chart follows the Daily/Weekly/Monthly mode instead of always plotting daily points. */
+        function histChartSeries(){
+          if (hMode === "Weekly") return (h.weekly || []).slice().reverse().map(function(g){ return {date: g.endDate, value: g.endValue}; });
+          if (hMode === "Monthly") return (h.monthly || []).slice().reverse().map(function(g){ return {date: g.endDate, value: g.endValue}; });
+          return h.equitySeries;
+        }
+        function renderHistChart(){
+          document.getElementById("histEquity").innerHTML = equityChart(histChartSeries());
+          var cap = document.getElementById("histChartCaption");
+          if (cap) cap.textContent = hMode === "Weekly" ? "Balance over time — Weekly: each week's end balance." :
+            hMode === "Monthly" ? "Balance over time — Monthly: each month's end balance." :
+            "Balance over time — Daily: each day's end balance.";
+        }
+        renderHistChart();
         function chgCell(r){
           if (r.change == null) return "—";
           return signed(r.change) + (r.changePct != null ? ' <span style="color:var(--faint)">(' + fmtPct(r.changePct) + ')</span>' : '');
@@ -1510,6 +1569,18 @@
                 renderHist();
               });
             });
+            body.querySelectorAll("[data-hexpand]").forEach(function(el){
+              var toggle = function(){
+                var det = el.querySelector(".row-detail");
+                if (!det) return;
+                var hidden = det.classList.toggle("hidden");
+                el.setAttribute("aria-expanded", hidden ? "false" : "true");
+              };
+              el.addEventListener("click", toggle);
+              el.addEventListener("keydown", function(ev){
+                if (ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); toggle(); }
+              });
+            });
           };
           if (hMode === "Daily") {
             var drows = (h.daily || []).slice().reverse();
@@ -1520,13 +1591,15 @@
                 var names = r.trades.map(function(t){ return typeof t === "string" ? t : (t.ticker || t.type || ""); }).filter(Boolean);
                 if (names.length) tradeTxt += ' · ' + names.join(", ");
               }
-              return '<article class="card"><div class="card-top"><div><div class="tick">' + fmtDateFull(r.date) + '</div>' +
+              return '<article class="card click" data-hexpand tabindex="0" role="button" aria-expanded="false"><div class="card-top"><div><div class="tick">' + fmtDateFull(r.date) + '</div>' +
                 '<div class="cname">' + esc(tradeTxt) + (r.snapshot ? ' · snapshot' : ' · in progress') + '</div></div>' +
                 '<div class="price"><div class="p">' + fmt(r.endValue) + '</div></div></div>' +
                 '<div class="kv"><div><div class="k">Start</div><div class="v">' + fmt(r.startValue) + '</div></div>' +
                 '<div><div class="k">End</div><div class="v">' + fmt(r.endValue) + '</div></div>' +
                 '<div><div class="k">Change</div><div class="v">' + chgCell(r) + '</div></div>' +
-                '<div><div class="k">SPY day</div><div class="v">' + fmtPct(r.spyPct) + '</div></div></div></article>';
+                '<div><div class="k">SPY day</div><div class="v">' + fmtPct(r.spyPct) + '</div></div></div>' +
+                '<div class="row-detail hidden"><div class="k">Trades</div><div>' +
+                ((typeof names !== "undefined" && names.length) ? esc(names.join(" · ")) : 'No trades this day.') + '</div></div></article>';
             }).join("");
             body.innerHTML = head + pills + '<div class="grid">' + cards + '</div>';
             wire();
@@ -1534,13 +1607,17 @@
             var grows0 = (hMode === "Weekly" ? (h.weekly || []) : (h.monthly || [])).slice().reverse();
             if (hSortKey) grows0.sort(hCmp);
             var gcars = grows0.map(function(g){
-              return '<article class="card"><div class="card-top"><div><div class="tick">' + esc(g.label) + '</div>' +
+              var daysIn = (h.daily || []).filter(function(r){ return r.date >= g.startDate && r.date <= g.endDate; });
+              var dayTxt = daysIn.map(function(r){ return fmtDate(r.date) + ' · ' + signed(r.change) + ' (' + fmtPct(r.changePct) + ') → ' + fmt(r.endValue); }).join("<br>");
+              return '<article class="card click" data-hexpand tabindex="0" role="button" aria-expanded="false"><div class="card-top"><div><div class="tick">' + esc(g.label) + '</div>' +
                 '<div class="cname">' + (g.tradesCount || 0) + ' trades' + (g.partial ? ' · to date' : '') + '</div></div>' +
                 '<div class="price"><div class="p">' + fmt(g.endValue) + '</div></div></div>' +
                 '<div class="kv"><div><div class="k">Start</div><div class="v">' + fmt(g.startValue) + '</div></div>' +
                 '<div><div class="k">End</div><div class="v">' + fmt(g.endValue) + '</div></div>' +
                 '<div><div class="k">Change</div><div class="v">' + chgCell(g) + '</div></div>' +
-                '<div><div class="k">SPY</div><div class="v">' + fmtPct(g.spyPct) + '</div></div></div></article>';
+                '<div><div class="k">SPY</div><div class="v">' + fmtPct(g.spyPct) + '</div></div></div>' +
+                '<div class="row-detail hidden"><div class="k">Days in this ' + (hMode === "Weekly" ? "week" : "month") + '</div><div>' +
+                (dayTxt || 'No daily rows in this range.') + '</div></div></article>';
             }).join("");
             body.innerHTML = head + pills + '<div class="grid">' + gcars + '</div>';
             wire();
@@ -1555,6 +1632,7 @@
             document.querySelectorAll("#histToggle .fbtn").forEach(function(b){ b.classList.remove("active"); });
             btn.classList.add("active");
             hMode = btn.getAttribute("data-hmode");
+            renderHistChart();
             renderHist();
           });
         });
