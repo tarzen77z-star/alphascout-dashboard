@@ -796,6 +796,22 @@
         }); });
         return [min, max];
       }
+      /* Compact history points (2026-11-05): details[].points arrives as
+         12-field arrays [date, close, ema20, ema50, sma50, sma200,
+         bbUpper, bbLower, rsi, macd, macdSignal, macdHist] — same values
+         as the old objects, keys dropped to shrink the file. unpackPoints
+         restores objects so detailChart below is unchanged. Field order
+         must match POINT_FIELDS in build_data.py. Old object-form points
+         pass through untouched, so a stale cached data file still works. */
+      var POINT_FIELDS = ["date","close","ema20","ema50","sma50","sma200","bbUpper","bbLower","rsi","macd","macdSignal","macdHist"];
+      function unpackPoints(pts){
+        return (pts || []).map(function(a){
+          if (!a || typeof a !== "object" || a.length === undefined) return a;
+          var o = {};
+          for (var i = 0; i < POINT_FIELDS.length; i++) o[POINT_FIELDS[i]] = (a[i] === undefined ? null : a[i]);
+          return o;
+        });
+      }
       function col(points, key){ return points.map(function(p){ return p[key]; }); }
 
       function detailChart(points, tg){
@@ -969,7 +985,7 @@
                 return '<button class="tgl' + (detailToggles[t[0]] ? " on" : "") + '" type="button" data-tgl="' + t[0] + '">' + t[1] + '</button>';
               }).join("") +
             '</div>' +
-            '<div class="chartbox" id="detailChart">' + detailChart(d.points, detailToggles) + '</div>' +
+            '<div class="chartbox" id="detailChart">' + detailChart(unpackPoints(d.points), detailToggles) + '</div>' +
           '</div>';
         var view = document.getElementById("view-detail");
         view.innerHTML = html;
@@ -983,7 +999,7 @@
             var k = btn.getAttribute("data-tgl");
             detailToggles[k] = !detailToggles[k];
             btn.classList.toggle("on", detailToggles[k]);
-            document.getElementById("detailChart").innerHTML = detailChart(d.points, detailToggles);
+            document.getElementById("detailChart").innerHTML = detailChart(unpackPoints(d.points), detailToggles);
           });
         });
       }
